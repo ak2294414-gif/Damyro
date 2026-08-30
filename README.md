@@ -1,2 +1,0 @@
-# Damyro
-Website for selling
