@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title id="page-title">Damyro — Next-Gen Web Engineering & Custom Bike Storefront</title>
+  <meta name="description" content="Damyro builds ultra-luxury web presences for ambitious brands." />
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Syne:wght@700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --bg: #070709;
+      --surface: #0d0d12;
+      --surface2: #12121a;
+      --cyan: #00f2fe;
+      --violet: #4facfe;
+      --pink: #a855f7;
+      --border: rgba(0, 242, 254, 0.12);
+      --border-hover: rgba(0, 242, 254, 0.35);
+      --glass: rgba(13, 13, 20, 0.85);
+      --text: #e8eaf0;
+      --muted: #6b7280;
+      --success: #10f28c;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Space Grotesk', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .grid-bg {
+      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background-image: linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px);
+      background-size: 48px 48px;
+    }
+
+    .font-display { font-family: 'Syne', sans-serif; }
+    .font-mono { font-family: 'JetBrains Mono', monospace; }
+
+    .glass {
+      background: var(--glass);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+    }
+
+    .gradient-text {
+      background: linear-gradient(135deg, var(--cyan) 0%, var(--violet) 50%, var(--pink) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--cyan) 0%, var(--violet) 100%);
+      color: #070709; font-weight: 700; border: none; border-radius: 12px;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+
+    .btn-ghost {
+      background: transparent; color: var(--text);
+      border: 1px solid var(--border); border-radius: 12px; cursor: pointer;
+    }
+
+    .btn-outline {
+      background: transparent; color: var(--cyan);
+      border: 1px solid var(--cyan); border-radius: 12px; cursor: pointer;
+    }
+
+    .input-field {
+      background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+      border-radius: 12px; color: var(--text); padding: 12px 16px; width: 100%;
+      outline: none; margin-bottom: 12px;
+    }
+
+    .step-page { display: none; min-height: 100vh; padding-top: 80px; position: relative; z-index: 1; }
+    .step-page.active { display: flex; flex-direction: column; }
+
+    .step-content { flex: 1; max-width: 1100px; margin: 0 auto; width: 100%; padding: 40px 20px; }
+
+    .option-card {
+      cursor: pointer; border: 1px solid var(--border); border-radius: 16px;
+      padding: 20px; background: rgba(13,13,20,0.6); transition: all 0.3s;
+    }
+    .option-card.selected { border-color: var(--cyan); background: rgba(0,242,254,0.08); }
+
+    .calendar-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 6px; }
+    .cal-day {
+      aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+      border-radius: 8px; font-size: 13px; cursor: pointer; background: rgba(255,255,255,0.03);
+    }
+    .cal-day:hover { background: var(--border); }
+    .cal-day.selected { background: var(--cyan); color: #000; font-weight: bold; }
+
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      backdrop-filter: blur(24px); background: rgba(7,7,9,0.85);
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* Admin & User Panels */
+    .floating-panel {
+      position: fixed; bottom: 20px; right: 20px; z-index: 200;
+      display: flex; gap: 10px;
+    }
+    .admin-drawer {
+      position: fixed; top: 0; right: -400px; width: 380px; height: 100vh;
+      background: var(--surface2); border-left: 1px solid var(--border);
+      z-index: 300; padding: 24px; transition: right 0.3s ease; overflow-y: auto;
+    }
+    .admin-drawer.open { right: 0; }
+
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.8);
+      backdrop-filter: blur(8px); z-index: 400; display: none;
+      align-items: center; justify-content: center;
+    }
+    .modal-overlay.show { display: flex; }
+  </style>
+</head>
+<body>
+
+<div class="grid-bg"></div>
+
+<nav>
+  <div style="max-width:1200px;margin:0 auto;padding:0 24px;height:64px;display:flex;align-items:center;justify-content:space-between;">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div style="width:32px;height:32px;background:var(--cyan);border-radius:8px;display:flex;align-items:center;justify-content:center;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="#070709" stroke-width="2.5"/></svg>
+      </div>
+      <span class="font-display" style="font-size:20px;font-weight:800;" id="nav-brand-text">Damyro</span>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:12px;">
+      <span id="user-status-tag" style="font-size:13px;color:var(--muted);">Not Logged In</span>
+      <button class="btn-outline" style="padding:6px 14px;font-size:13px;" onclick="openAuthModal()" id="auth-nav-btn">Customer Login</button>
+      <button class="btn-ghost" style="padding:6px 14px;font-size:13px;display:none;" id="dashboard-nav-btn" onclick="openDashboard()">Dashboard</button>
+    </div>
+  </div>
+</nav>
+
+<div class="floating-panel">
+  <button class="btn-ghost" style="background:var(--surface2);padding:10px 16px;font-size:13px;" onclick="toggleAdminDrawer()">⚙️ Admin Visual Editor</button>
+</div>
+
+<div class="admin-drawer glass" id="admin-drawer">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+    <h3 class="font-display" style="font-size:18px;font-weight:700;">Live Theme Editor</h3>
+    <button onclick="toggleAdminDrawer()" style="color:var(--muted)">✕</button>
+  </div>
+  
+  <label style="font-size:12px;color:var(--muted)">BRAND NAME</label>
+  <input type="text" id="admin-brand-input" class="input-field" value="Damyro" oninput="updateBrandName(this.value)" />
+
+  <label style="font-size:12px;color:var(--muted)">HERO HEADLINE</label>
+  <input type="text" id="admin-headline-input" class="input-field" value="Web that moves like you do." oninput="updateHeadline(this.value)" />
+
+  <label style="font-size:12px;color:var(--muted);margin-top:10px;display:block;">ACCENT COLOR</label>
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:20px;">
+    <button style="height:32px;background:#00f2fe;border-radius:6px;" onclick="setThemeColor('#00f2fe')"></button>
+    <button style="height:32px;background:#10f28c;border-radius:6px;" onclick="setThemeColor('#10f28c')"></button>
+    <button style="height:32px;background:#ff7b00;border-radius:6px;" onclick="setThemeColor('#ff7b00')"></button>
+    <button style="height:32px;background:#a855f7;border-radius:6px;" onclick="setThemeColor('#a855f7')"></button>
+  </div>
+
+  <label style="font-size:12px;color:var(--muted)">HERO BACKGROUND IMAGE URL</label>
+  <input type="text" id="admin-image-input" class="input-field" value="https://images.unsplash.com/photo-1485965120184-e220f721d03e?auto=format&fit=crop&w=800&q=80" onchange="updateHeroImage(this.value)" />
+</div>
+
+<div id="step-0" class="step-page active">
+  <div class="step-content">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:center;" id="hero-layout">
+      <div>
+        <h1 class="font-display" style="font-size:clamp(36px,5vw,64px);font-weight:800;line-height:1.1;margin-bottom:20px;" id="hero-headline">
+          Web that <span class="gradient-text">moves</span> like you do.
+        </h1>
+        <p style="font-size:16px;color:var(--muted);margin-bottom:28px;">
+          Build ultra-performance web platforms for ambitious brands — from custom 3D bike storefronts to high-converting corporate engines.
+        </p>
+        <div style="display:flex;gap:12px;">
+          <button class="btn-primary" style="padding:14px 28px;" onclick="startBooking()">Start Project →</button>
+        </div>
+      </div>
+      <div>
+        <img id="hero-image-display" src="https://images.unsplash.com/photo-1485965120184-e220f721d03e?auto=format&fit=crop&w=800&q=80" alt="Bike Engineering" style="width:100%;border-radius:20px;border:1px solid var(--border);" />
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="step-1" class="step-page">
+  <div class="step-content">
+    <h2 class="font-display" style="font-size:28px;font-weight:700;margin-bottom:20px;">1. Select Business Category</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:30px;">
+      <div class="option-card selected" onclick="selectCategory(this, '3D Bike Storefront')">
+        <h3>🏍️ E-Commerce & Bike Storefront</h3>
+        <p style="font-size:12px;color:var(--muted);margin-top:6px;">3D product displays & checkout</p>
+      </div>
+      <div class="option-card" onclick="selectCategory(this, 'Corporate Platform')">
+        <h3>🏢 Corporate & Professional</h3>
+        <p style="font-size:12px;color:var(--muted);margin-top:6px;">Enterprise platform & lead capture</p>
+      </div>
+    </div>
+    <button class="btn-primary" style="padding:12px 24px;" onclick="goToStep(2)">Next: Choose Template →</button>
+  </div>
+</div>
+
+<div id="step-2" class="step-page">
+  <div class="step-content">
+    <h2 class="font-display" style="font-size:28px;font-weight:700;margin-bottom:20px;">2. Choose Architecture Template</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;margin-bottom:30px;">
+      <div class="glass" style="padding:20px;cursor:pointer;" onclick="selectTemplate('Apex 3D Bike Storefront', 1299)">
+        <img src="https://images.unsplash.com/photo-1532298229144-0ec0c57515c7?auto=format&fit=crop&w=500&q=80" style="width:100%;height:160px;object-fit:cover;border-radius:12px;margin-bottom:12px;" />
+        <h3>Apex 3D Bike Storefront</h3>
+        <p style="font-size:14px;color:var(--cyan);font-weight:bold;margin-top:8px;">$1,299 Build</p>
+      </div>
+      <div class="glass" style="padding:20px;cursor:pointer;" onclick="selectTemplate('Vanguard Corporate', 899)">
+        <img src="https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=500&q=80" style="width:100%;height:160px;object-fit:cover;border-radius:12px;margin-bottom:12px;" />
+        <h3>Vanguard Corporate</h3>
+        <p style="font-size:14px;color:var(--cyan);font-weight:bold;margin-top:8px;">$899 Build</p>
+      </div>
+    </div>
+    <button class="btn-ghost" style="padding:12px 24px;" onclick="goToStep(1)">← Back</button>
+  </div>
+</div>
+
+<div id="step-3" class="step-page">
+  <div class="step-content">
+    <h2 class="font-display" style="font-size:28px;font-weight:700;margin-bottom:10px;">3. Book Kickoff Call</h2>
+    <p style="color:var(--muted);margin-bottom:20px;">Select a date for your consultation.</p>
+    
+    <div class="glass" style="padding:20px;max-width:400px;margin-bottom:20px;">
+      <div class="calendar-grid" id="calendar-days"></div>
+    </div>
+
+    <button class="btn-primary" style="padding:12px 24px;" onclick="goToStep(4)">Proceed to Confirmation →</button>
+  </div>
+</div>
+
+<div id="step-4" class="step-page">
+  <div class="step-content">
+    <h2 class="font-display" style="font-size:28px;font-weight:700;margin-bottom:20px;">4. Review & Confirm Booking</h2>
+    <div class="glass" style="padding:24px;max-width:500px;margin-bottom:20px;">
+      <p><strong>Package:</strong> <span id="summary-package">Apex 3D Bike Storefront</span></p>
+      <p style="margin-top:8px;"><strong>Selected Date:</strong> <span id="summary-date">September 15, 2026</span></p>
+      <p style="margin-top:8px;"><strong>Account Gmail:</strong> <span id="summary-email">user@gmail.com</span></p>
+      <hr style="border-color:var(--border);margin:16px 0;" />
+      <p style="font-size:18px;"><strong>Total Initial Deposit:</strong> <span id="summary-price" style="color:var(--cyan)">$1,299.00</span></p>
+    </div>
+    <button class="btn-primary" style="padding:14px 28px;" onclick="completeBooking()">Complete Booking & Pay Deposit</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="auth-modal">
+  <div class="glass" style="padding:32px;width:90%;max-width:400px;text-align:center;">
+    <h3 class="font-display" style="font-size:20px;font-weight:700;margin-bottom:12px;">Customer Login</h3>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:20px;">Enter your Gmail address to unlock appointment booking and access your project portal.</p>
+    <input type="email" id="login-email-input" class="input-field" placeholder="your.name@gmail.com" />
+    <button class="btn-primary" style="width:100%;padding:12px;" onclick="loginUser()">Login with Email</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="dashboard-modal">
+  <div class="glass" style="padding:32px;width:90%;max-width:500px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+      <h3 class="font-display" style="font-size:20px;font-weight:700;">Customer Dashboard</h3>
+      <button onclick="closeDashboard()" style="color:var(--muted)">✕</button>
+    </div>
+    <div id="dashboard-content">
+      <p style="color:var(--muted)">No appointments booked yet.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+  // App State
+  let currentUser = localStorage.getItem('damyro_user') || null;
+  let activeStep = 0;
+  let bookingData = {
+    category: '3D Bike Storefront',
+    template: 'Apex 3D Bike Storefront',
+    price: 1299,
+    date: 'September 15, 2026'
+  };
+
+  window.addEventListener('DOMContentLoaded', () => {
+    updateAuthUI();
+    renderCalendar();
+  });
+
+  function updateAuthUI() {
+    const statusTag = document.getElementById('user-status-tag');
+    const authBtn = document.getElementById('auth-nav-btn');
+    const dashBtn = document.getElementById('dashboard-nav-btn');
+
+    if (currentUser) {
+      statusTag.innerText = currentUser;
+      authBtn.innerText = 'Logout';
+      dashBtn.style.display = 'inline-block';
+    } else {
+      statusTag.innerText = 'Not Logged In';
+      authBtn.innerText = 'Customer Login';
+      dashBtn.style.display = 'none';
+    }
+  }
+
+  function openAuthModal() {
+    if (currentUser) {
+      currentUser = null;
+      localStorage.removeItem('damyro_user');
+      updateAuthUI();
+      goToStep(0);
+    } else {
+      document.getElementById('auth-modal').classList.add('show');
+    }
+  }
+
+  function loginUser() {
+    const email = document.getElementById('login-email-input').value;
+    if (email && email.includes('@')) {
+      currentUser = email;
+      localStorage.setItem('damyro_user', email);
+      document.getElementById('auth-modal').classList.remove('show');
+      updateAuthUI();
+      if (activeStep === 3) goToStep(3);
+    } else {
+      alert('Please enter a valid Gmail address.');
+    }
+  }
+
+  function startBooking() {
+    goToStep(1);
+  }
+
+  function goToStep(stepNum) {
+    if (stepNum >= 3 && !currentUser) {
+      openAuthModal();
+      return;
+    }
+    document.querySelectorAll('.step-page').forEach(p => p.classList.remove('active'));
+    document.getElementById(`step-${stepNum}`).classList.add('active');
+    activeStep = stepNum;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function selectCategory(el, category) {
+    document.querySelectorAll('#step-1 .option-card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    bookingData.category = category;
+  }
+
+  function selectTemplate(name, price) {
+    bookingData.template = name;
+    bookingData.price = price;
+    goToStep(3);
+  }
+
+  function renderCalendar() {
+    const cal = document.getElementById('calendar-days');
+    cal.innerHTML = '';
+    for (let i = 1; i <= 28; i++) {
+      const day = document.createElement('div');
+      day.className = 'cal-day' + (i === 15 ? ' selected' : '');
+      day.innerText = i;
+      day.onclick = () => {
+        document.querySelectorAll('.cal-day').forEach(d => d.classList.remove('selected'));
+        day.classList.add('selected');
+        bookingData.date = `September ${i}, 2026`;
+      };
+      cal.appendChild(day);
+    }
+  }
+
+  function completeBooking() {
+    const bookings = JSON.parse(localStorage.getItem('damyro_bookings') || '[]');
+    bookings.push({ user: currentUser, ...bookingData, status: 'Paid Deposit' });
+    localStorage.setItem('damyro_bookings', JSON.stringify(bookings));
+    
+    alert('Appointment & Order Successfully Registered!');
+    openDashboard();
+  }
+
+  function openDashboard() {
+    const content = document.getElementById('dashboard-content');
+    const bookings = JSON.parse(localStorage.getItem('damyro_bookings') || '[]')
+      .filter(b => b.user === currentUser);
+
+    if (bookings.length === 0) {
+      content.innerHTML = '<p style="color:var(--muted)">No appointments booked yet.</p>';
+    } else {
+      content.innerHTML = bookings.map(b => `
+        <div class="glass" style="padding:16px;margin-bottom:12px;">
+          <p><strong>Package:</strong> ${b.template}</p>
+          <p><strong>Date:</strong> ${b.date}</p>
+          <p><strong>Status:</strong> <span style="color:var(--success)">${b.status}</span></p>
+        </div>
+      `).join('');
+    }
+    document.getElementById('dashboard-modal').classList.add('show');
+  }
+
+  function closeDashboard() {
+    document.getElementById('dashboard-modal').classList.remove('show');
+  }
+
+  // Admin Customization Handlers
+  function toggleAdminDrawer() {
+    document.getElementById('admin-drawer').classList.toggle('open');
+  }
+
+  function updateBrandName(val) {
+    document.getElementById('nav-brand-text').innerText = val;
+    document.getElementById('page-title').innerText = val + " — Next-Gen Web Engineering";
+  }
+
+  function updateHeadline(val) {
+    document.getElementById('hero-headline').innerHTML = val;
+  }
+
+  function setThemeColor(hex) {
+    document.documentElement.style.setProperty('--cyan', hex);
+  }
+
+  function updateHeroImage(url) {
+    document.getElementById('hero-image-display').src = url;
+  }
+</script>
+</body>
+</html>
