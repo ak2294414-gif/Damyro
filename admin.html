@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Damyro — Admin Panel</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --forest-deep:#0d1f15;--forest-dark:#132b1a;--forest-mid:#1e4028;
+    --forest-green:#2d5e3a;--moss:#4a7c59;--mist:#7aab8a;--foam:#b2d4bc;
+    --sky-pale:#c8dfe8;--water-blue:#6a9cb0;--cascade-white:#e8f2ec;
+    --pure:#ffffff;--gold-accent:#c9a84c;--text-primary:#e8f2ec;
+    --card-bg:rgba(19,43,26,0.82);--border:rgba(178,212,188,0.15);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{min-height:100vh;font-family:"Inter",sans-serif;
+    background:linear-gradient(160deg,var(--forest-deep) 0%,#071510 100%);color:var(--text-primary);}
+  .bg-glow{position:fixed;inset:0;pointer-events:none;
+    background:radial-gradient(ellipse 60% 50% at 20% 30%,rgba(45,94,58,0.15) 0%,transparent 65%);}
+
+  /* AUTH GATE */
+  .auth-gate{position:fixed;inset:0;background:rgba(7,21,16,0.97);z-index:9999;
+    display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1.5rem;}
+  .auth-card{background:var(--card-bg);border:1px solid var(--border);border-radius:22px;
+    padding:2.8rem 2.2rem;width:min(400px,92vw);backdrop-filter:blur(20px);text-align:center;}
+  .auth-icon{font-size:2.5rem;margin-bottom:0.8rem;}
+  .auth-title{font-family:"Cormorant Garamond",serif;font-size:2rem;font-weight:300;color:var(--pure);margin-bottom:0.4rem;}
+  .auth-sub{color:var(--mist);font-size:0.84rem;margin-bottom:1.8rem;line-height:1.6;}
+  .auth-label{display:block;font-size:0.74rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--mist);margin-bottom:0.5rem;text-align:left;}
+  .auth-input{width:100%;padding:0.9rem 1.1rem;background:rgba(13,31,21,0.7);border:1px solid var(--border);border-radius:12px;color:var(--text-primary);font-size:0.95rem;font-family:"Inter",sans-serif;outline:none;margin-bottom:1rem;transition:border-color 0.2s;}
+  .auth-input:focus{border-color:var(--moss);box-shadow:0 0 0 3px rgba(74,124,89,0.2);}
+  .auth-btn{width:100%;padding:0.95rem;background:linear-gradient(135deg,var(--forest-green),var(--water-blue));border:none;border-radius:12px;color:var(--pure);font-size:0.95rem;font-weight:600;cursor:pointer;transition:all 0.3s;font-family:"Inter",sans-serif;}
+  .auth-btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(45,94,58,0.45);}
+  .auth-btn:disabled{opacity:0.6;cursor:not-allowed;transform:none;}
+  .auth-error{color:#e87070;font-size:0.82rem;margin-top:0.8rem;min-height:20px;}
+  .auth-hint{color:rgba(122,171,138,0.4);font-size:0.7rem;margin-top:0.5rem;}
+
+  /* NAV */
+  .nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;
+    padding:1rem 2rem;background:rgba(13,31,21,0.92);border-bottom:1px solid var(--border);backdrop-filter:blur(16px);}
+  .nav-logo{display:flex;align-items:center;gap:0.7rem;}
+  .nav-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--moss),var(--water-blue));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1rem;}
+  .nav-name{font-family:"Cormorant Garamond",serif;font-size:1.3rem;font-weight:300;letter-spacing:0.12em;}
+  .admin-badge{background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.3);color:var(--gold-accent);font-size:0.72rem;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;padding:0.3rem 0.8rem;border-radius:50px;}
+  .logout-nav{background:none;border:1px solid var(--border);border-radius:8px;color:var(--mist);font-size:0.8rem;padding:0.4rem 0.9rem;cursor:pointer;transition:all 0.2s;font-family:"Inter",sans-serif;}
+  .logout-nav:hover{border-color:#b05555;color:#e87070;}
+
+  .main{max-width:1100px;margin:0 auto;padding:2rem;position:relative;z-index:10;}
+  .page-title{font-family:"Cormorant Garamond",serif;font-size:2.2rem;font-weight:300;color:var(--pure);margin-bottom:0.3rem;}
+  .page-sub{color:var(--mist);font-size:0.88rem;margin-bottom:2rem;}
+
+  /* Stats */
+  .stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1rem;margin-bottom:2rem;}
+  .stat-card{background:var(--card-bg);border:1px solid var(--border);border-radius:16px;padding:1.2rem 1.4rem;backdrop-filter:blur(16px);}
+  .stat-label{font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--mist);margin-bottom:0.5rem;}
+  .stat-value{font-size:1.8rem;font-weight:700;color:var(--pure);}
+  .stat-sub{font-size:0.72rem;color:var(--mist);margin-top:0.2rem;}
+
+  /* Filter */
+  .filter-tabs{display:flex;gap:0.5rem;margin-bottom:1.5rem;flex-wrap:wrap;}
+  .tab{padding:0.5rem 1.2rem;border-radius:50px;font-size:0.82rem;font-weight:500;cursor:pointer;
+    border:1px solid var(--border);color:var(--mist);background:transparent;transition:all 0.2s;font-family:"Inter",sans-serif;}
+  .tab.active{background:rgba(45,94,58,0.35);border-color:var(--moss);color:var(--cascade-white);}
+  .tab:hover:not(.active){border-color:var(--mist);color:var(--foam);}
+
+  /* Booking rows */
+  .booking-row{background:var(--card-bg);border:1px solid var(--border);border-radius:18px;padding:1.5rem;margin-bottom:1rem;backdrop-filter:blur(16px);transition:border-color 0.2s;}
+  .booking-row:hover{border-color:rgba(178,212,188,0.28);}
+  .row-top{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:1rem;}
+  .row-id{font-size:0.68rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--mist);margin-bottom:0.3rem;}
+  .row-name{font-size:1.1rem;font-weight:500;color:var(--pure);}
+  .row-pkg{font-size:0.82rem;color:var(--mist);margin-top:0.2rem;}
+  .status-badge{display:inline-flex;align-items:center;gap:0.4rem;padding:0.4rem 0.9rem;border-radius:50px;font-size:0.75rem;font-weight:600;}
+  .status-badge.pending{background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.3);color:var(--gold-accent);}
+  .status-badge.accepted{background:rgba(74,124,89,0.18);border:1px solid rgba(74,124,89,0.35);color:var(--mist);}
+  .status-badge.declined{background:rgba(176,85,85,0.12);border:1px solid rgba(176,85,85,0.25);color:#e87070;}
+  .status-dot{width:6px;height:6px;border-radius:50%;}
+  .status-badge.pending .status-dot{background:var(--gold-accent);}
+  .status-badge.accepted .status-dot{background:var(--moss);}
+  .status-badge.declined .status-dot{background:#e87070;}
+  .row-details{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:0.8rem;margin-bottom:1.2rem;}
+  .detail-label{font-size:0.67rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--mist);margin-bottom:0.25rem;}
+  .detail-value{font-size:0.85rem;color:var(--foam);word-break:break-word;}
+
+  /* Accept controls */
+  .accept-controls{background:rgba(13,31,21,0.5);border:1px solid rgba(74,124,89,0.2);border-radius:14px;padding:1.2rem;display:flex;flex-wrap:wrap;align-items:flex-end;gap:1rem;}
+  .control-label{font-size:0.73rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--mist);margin-bottom:0.4rem;}
+  .time-input,.meet-input{padding:0.65rem 0.9rem;background:rgba(13,31,21,0.7);border:1px solid var(--border);border-radius:10px;color:var(--text-primary);font-size:0.88rem;font-family:"Inter",sans-serif;outline:none;transition:border-color 0.2s;}
+  .time-input:focus,.meet-input:focus{border-color:var(--moss);}
+  .meet-input{width:100%;max-width:300px;}
+  .meet-input::placeholder{color:rgba(122,171,138,0.4);}
+  .btn-accept{padding:0.7rem 1.6rem;background:linear-gradient(135deg,var(--forest-green),var(--water-blue));border:none;border-radius:10px;color:var(--pure);font-size:0.85rem;font-weight:600;cursor:pointer;transition:all 0.3s;white-space:nowrap;font-family:"Inter",sans-serif;}
+  .btn-accept:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(45,94,58,0.45);}
+  .btn-reject{padding:0.7rem 1.2rem;background:rgba(176,85,85,0.12);border:1px solid rgba(176,85,85,0.25);border-radius:10px;color:#e87070;font-size:0.85rem;cursor:pointer;transition:all 0.3s;font-family:"Inter",sans-serif;}
+  .btn-reject:hover{background:rgba(176,85,85,0.2);}
+  .accepted-info{background:rgba(45,94,58,0.15);border:1px solid rgba(74,124,89,0.3);border-radius:12px;padding:1rem 1.2rem;font-size:0.85rem;color:var(--foam);}
+
+  /* Empty */
+  .empty-state{text-align:center;padding:3.5rem;background:var(--card-bg);border:1px solid var(--border);border-radius:20px;}
+  .empty-icon{font-size:3rem;margin-bottom:1rem;opacity:0.6;}
+  .empty-title{font-family:"Cormorant Garamond",serif;font-size:1.5rem;color:var(--foam);}
+  .empty-desc{color:var(--mist);font-size:0.85rem;margin-top:0.5rem;}
+
+  /* Customer list panel */
+  .customer-card{background:var(--card-bg);border:1px solid var(--border);border-radius:16px;padding:1.2rem 1.5rem;margin-bottom:1rem;display:grid;grid-template-columns:auto 1fr auto;gap:1rem;align-items:center;}
+  .c-avatar{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--forest-green),var(--water-blue));display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:600;color:var(--pure);}
+  .c-name{font-size:0.95rem;font-weight:500;color:var(--foam);}
+  .c-email{font-size:0.78rem;color:var(--mist);}
+  .c-badge{font-size:0.72rem;color:var(--mist);background:rgba(19,43,26,0.6);border:1px solid var(--border);padding:0.25rem 0.7rem;border-radius:50px;}
+
+  /* Toast */
+  .toast{position:fixed;bottom:2rem;right:2rem;transform:translateX(200%);
+    background:var(--forest-green);color:var(--pure);padding:0.8rem 1.5rem;border-radius:12px;
+    font-size:0.85rem;font-weight:500;box-shadow:0 8px 24px rgba(0,0,0,0.3);transition:transform 0.4s ease;z-index:9998;}
+  .toast.show{transform:translateX(0);}
+
+  /* Tabs */
+  .admin-tabs{display:flex;gap:0.5rem;margin-bottom:2rem;border-bottom:1px solid var(--border);padding-bottom:1rem;}
+  .admin-tab{padding:0.6rem 1.4rem;border-radius:50px;font-size:0.85rem;cursor:pointer;border:1px solid transparent;color:var(--mist);background:transparent;transition:all 0.2s;font-family:"Inter",sans-serif;}
+  .admin-tab.active{background:rgba(45,94,58,0.35);border-color:var(--moss);color:var(--cascade-white);}
+  .admin-section{display:none;}
+  .admin-section.active{display:block;}
+
+  .loading-state{text-align:center;padding:3rem;color:var(--mist);}
+  .spinner{width:28px;height:28px;border:3px solid rgba(178,212,188,0.2);border-top-color:var(--moss);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 1rem;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  @media(max-width:600px){.main{padding:1rem;}.row-details{grid-template-columns:1fr 1fr;}.accept-controls{flex-direction:column;}.customer-card{grid-template-columns:auto 1fr;}}
+</style>
+</head>
+<body>
+<div class="bg-glow"></div>
+
+<!-- AUTH GATE — shown until admin verified -->
+<div class="auth-gate" id="authGate">
+  <div class="auth-card">
+    <div class="auth-icon">🔐</div>
+    <div class="auth-title">Admin Access</div>
+    <p class="auth-sub">Sign in with the admin email and password to access the management panel.</p>
+    <label class="auth-label">Email Address</label>
+    <input type="email" class="auth-input" id="adminEmail" placeholder="admin@example.com" autocomplete="email"/>
+    <label class="auth-label">Password</label>
+    <input type="password" class="auth-input" id="adminPassword" placeholder="Admin password" onkeydown="if(event.key==='Enter')adminSignIn()"/>
+    <button class="auth-btn" id="adminBtn" onclick="adminSignIn()">Sign In to Admin Panel</button>
+    <div class="auth-error" id="authError"></div>
+    <div class="auth-hint">Only the designated admin account can access this panel.</div>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-logo">
+    <div class="nav-icon">🌿</div>
+    <span class="nav-name">Damyro</span>
+    <span class="admin-badge">Admin</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:1rem;">
+    <span style="font-size:0.8rem;color:var(--mist)" id="adminWelcome">Creator Panel</span>
+    <button class="logout-nav" onclick="adminLogout()">Sign Out</button>
+  </div>
+</nav>
+
+<main class="main">
+  <h1 class="page-title">Management Panel</h1>
+  <p class="page-sub">Manage bookings and customers in real-time.</p>
+
+  <div class="admin-tabs">
+    <button class="admin-tab active" onclick="switchAdminTab('bookings',this)">📅 Appointments</button>
+    <button class="admin-tab" onclick="switchAdminTab('customers',this)">👥 Customers</button>
+  </div>
+
+  <!-- BOOKINGS SECTION -->
+  <div class="admin-section active" id="admin-bookings">
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-label">Total Requests</div><div class="stat-value" id="aTotal">0</div></div>
+      <div class="stat-card"><div class="stat-label">Pending</div><div class="stat-value" style="color:var(--gold-accent)" id="aPending">0</div></div>
+      <div class="stat-card"><div class="stat-label">Accepted</div><div class="stat-value" style="color:var(--mist)" id="aAccepted">0</div></div>
+      <div class="stat-card"><div class="stat-label">This Week</div><div class="stat-value" id="aWeek">0</div></div>
+    </div>
+    <div class="filter-tabs">
+      <button class="tab active" onclick="filterBookings('all',this)">All</button>
+      <button class="tab" onclick="filterBookings('pending',this)">Pending</button>
+      <button class="tab" onclick="filterBookings('accepted',this)">Accepted</button>
+      <button class="tab" onclick="filterBookings('declined',this)">Declined</button>
+    </div>
+    <div class="loading-state" id="bookingsLoading"><div class="spinner"></div>Loading bookings...</div>
+    <div id="adminBookingsList"></div>
+  </div>
+
+  <!-- CUSTOMERS SECTION -->
+  <div class="admin-section" id="admin-customers">
+    <div class="loading-state" id="customersLoading"><div class="spinner"></div>Loading customers...</div>
+    <div id="customersList"></div>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script>
+  let currentFilter = 'all';
+  let allBookings = [];
+  let adminUser = null;
+
+  function switchAdminTab(name, el) {
+    document.querySelectorAll('.admin-section').forEach(s=>s.classList.remove('active'));
+    document.querySelectorAll('.admin-tab').forEach(t=>t.classList.remove('active'));
+    document.getElementById('admin-'+name).classList.add('active');
+    el.classList.add('active');
+    if(name === 'customers') loadCustomers();
+  }
+
+  async function adminSignIn() {
+    const email = document.getElementById('adminEmail').value.trim();
+    const password = document.getElementById('adminPassword').value;
+    const errEl = document.getElementById('authError');
+    const btn = document.getElementById('adminBtn');
+
+    if(!email || !password) { errEl.textContent = '❌ Please fill in all fields.'; return; }
+    if(!isAdminEmail(email)) { errEl.textContent = '❌ This is not the admin email address.'; return; }
+
+    btn.disabled = true; btn.textContent = 'Signing in...'; errEl.textContent = '';
+
+    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+
+    if(error) {
+      btn.disabled = false; btn.textContent = 'Sign In to Admin Panel';
+      errEl.textContent = '❌ ' + (error.message.includes('Invalid') ? 'Incorrect email or password.' : error.message);
+      return;
+    }
+
+    if(!isAdminEmail(data.user.email)) {
+      await supabaseClient.auth.signOut();
+      btn.disabled = false; btn.textContent = 'Sign In to Admin Panel';
+      errEl.textContent = '❌ Access denied. Not the admin account.';
+      return;
+    }
+
+    adminUser = data.user;
+    document.getElementById('authGate').style.display = 'none';
+    document.getElementById('adminWelcome').textContent = `Welcome, Admin`;
+    await loadBookings();
+
+    supabaseClient.channel('admin-changes')
+      .on('postgres_changes',{event:'*',schema:'public',table:'bookings'}, () => loadBookings())
+      .subscribe();
+  }
+
+  async function checkExistingSession() {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if(!session) return;
+    if(!isAdminEmail(session.user.email)) {
+      // Not admin, redirect
+      window.location.href = 'dashboard.html';
+      return;
+    }
+    adminUser = session.user;
+    document.getElementById('authGate').style.display = 'none';
+    document.getElementById('adminWelcome').textContent = `Welcome, Admin`;
+    await loadBookings();
+
+    supabaseClient.channel('admin-changes')
+      .on('postgres_changes',{event:'*',schema:'public',table:'bookings'}, () => loadBookings())
+      .subscribe();
+  }
+  checkExistingSession();
+
+  function adminLogout() {
+    supabaseClient.auth.signOut().then(() => {
+      window.location.href = 'login.html';
+    });
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  async function loadBookings() {
+    document.getElementById('bookingsLoading').style.display = 'block';
+    const { data, error } = await supabaseClient
+      .from('bookings').select('*').order('submitted_at',{ascending:false});
+    document.getElementById('bookingsLoading').style.display = 'none';
+    if(error) { showToast('❌ Could not load bookings.'); return; }
+    allBookings = data || [];
+
+    document.getElementById('aTotal').textContent = allBookings.length;
+    document.getElementById('aPending').textContent = allBookings.filter(b=>b.status==='pending').length;
+    document.getElementById('aAccepted').textContent = allBookings.filter(b=>b.status==='accepted').length;
+    const weekAgo = Date.now() - 7*24*60*60*1000;
+    document.getElementById('aWeek').textContent = allBookings.filter(b=>new Date(b.submitted_at).getTime()>weekAgo).length;
+
+    renderAdminList();
+  }
+
+  function filterBookings(filter, el) {
+    currentFilter = filter;
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    el.classList.add('active');
+    renderAdminList();
+  }
+
+  function renderAdminList() {
+    const container = document.getElementById('adminBookingsList');
+    let arr = currentFilter === 'all' ? allBookings : allBookings.filter(b=>b.status===currentFilter);
+    if(arr.length === 0) {
+      container.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-title">No bookings</div><div class="empty-desc">No ${currentFilter==='all'?'':currentFilter} booking requests found.</div></div>`;
+      return;
+    }
+    container.innerHTML = arr.map(b => renderAdminCard(b)).join('');
+  }
+
+  function renderAdminCard(b) {
+    const date = new Date(b.submitted_at).toLocaleString('en-IN',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    const isAccepted = b.status === 'accepted';
+    const isDeclined = b.status === 'declined';
+    const statusBadge = isAccepted
+      ? `<span class="status-badge accepted"><span class="status-dot"></span>Accepted</span>`
+      : isDeclined
+      ? `<span class="status-badge declined"><span class="status-dot"></span>Declined</span>`
+      : `<span class="status-badge pending"><span class="status-dot"></span>Pending</span>`;
+
+    const controls = isAccepted
+      ? `<div class="accepted-info">✅ <strong>Confirmed.</strong> Time: <strong>${b.assigned_time||'—'}</strong> | Meet: ${b.meet_link?`<a href="${b.meet_link}" target="_blank" style="color:var(--water-blue)">${b.meet_link}</a>`:'—'}</div>`
+      : isDeclined
+      ? `<div class="accepted-info" style="background:rgba(176,85,85,0.1);border-color:rgba(176,85,85,0.3);">❌ This booking was declined.</div>`
+      : `<div class="accept-controls">
+          <div>
+            <div class="control-label">Appointment Date & Time</div>
+            <input type="datetime-local" class="time-input" id="time_${b.id}"/>
+          </div>
+          <div>
+            <div class="control-label">Google Meet Link</div>
+            <input type="url" class="meet-input" id="meet_${b.id}" placeholder="https://meet.google.com/..."/>
+          </div>
+          <div style="display:flex;gap:0.7rem;align-items:flex-end;">
+            <button class="btn-accept" onclick="acceptBooking('${b.id}')">✓ Accept & Confirm</button>
+            <button class="btn-reject" onclick="rejectBooking('${b.id}')">✕ Decline</button>
+          </div>
+        </div>`;
+
+    const reqText = b.requirements ? `<div><div class="detail-label">Requirements</div><div class="detail-value">${b.requirements}</div></div>` : '';
+
+    return `<div class="booking-row" id="row_${b.id}">
+      <div class="row-top">
+        <div>
+          <div class="row-id">Booking #${b.id.substring(0,8).toUpperCase()}</div>
+          <div class="row-name">${b.full_name||'Unknown'}</div>
+          <div class="row-pkg">${b.package||'—'} • ${b.business_name||'No business name'}</div>
+        </div>
+        ${statusBadge}
+      </div>
+      <div class="row-details">
+        <div><div class="detail-label">Submitted</div><div class="detail-value">${date}</div></div>
+        <div><div class="detail-label">Email</div><div class="detail-value">${b.email||'—'}</div></div>
+        <div><div class="detail-label">Mobile</div><div class="detail-value">${b.mobile||'—'}</div></div>
+        <div><div class="detail-label">Location</div><div class="detail-value">${b.location||'—'}</div></div>
+        <div><div class="detail-label">Payment Method</div><div class="detail-value">${b.payment_method||'—'}</div></div>
+        ${reqText}
+      </div>
+      ${controls}
+    </div>`;
+  }
+
+  async function acceptBooking(id) {
+    const timeVal = document.getElementById('time_'+id)?.value;
+    const meetVal = document.getElementById('meet_'+id)?.value?.trim();
+    if(!timeVal) { showToast('⚠️ Please select an appointment date & time.'); return; }
+
+    const formatted = new Date(timeVal).toLocaleString('en-IN',{
+      weekday:'long',day:'numeric',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'
+    });
+
+    const { error } = await supabaseClient.from('bookings').update({
+      status: 'accepted',
+      assigned_time: formatted,
+      meet_link: meetVal || null,
+      accepted_at: new Date().toISOString()
+    }).eq('id', id);
+
+    if(error) { showToast('❌ Failed to accept: ' + error.message); return; }
+    showToast('✅ Booking accepted & customer notified!');
+    await loadBookings();
+  }
+
+  async function rejectBooking(id) {
+    if(!confirm('Are you sure you want to decline this booking?')) return;
+    const { error } = await supabaseClient.from('bookings').update({ status: 'declined' }).eq('id', id);
+    if(error) { showToast('❌ Failed to decline: ' + error.message); return; }
+    showToast('✅ Booking declined.');
+    await loadBookings();
+  }
+
+  async function loadCustomers() {
+    document.getElementById('customersLoading').style.display = 'block';
+    const { data, error } = await supabaseClient
+      .from('profiles').select('*').order('created_at',{ascending:false});
+    document.getElementById('customersLoading').style.display = 'none';
+    if(error) { showToast('❌ Could not load customers.'); return; }
+
+    const container = document.getElementById('customersList');
+    if(!data || data.length === 0) {
+      container.innerHTML = `<div class="empty-state"><div class="empty-icon">👥</div><div class="empty-title">No customers yet</div></div>`;
+      return;
+    }
+    container.innerHTML = `<p style="color:var(--mist);font-size:0.82rem;margin-bottom:1rem;">${data.length} registered account${data.length!==1?'s':''}</p>`;
+    data.forEach(c => {
+      const initial = (c.full_name||c.email||'?').charAt(0).toUpperCase();
+      const joined = new Date(c.created_at).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
+      container.innerHTML += `<div class="customer-card">
+        <div class="c-avatar">${initial}</div>
+        <div>
+          <div class="c-name">${c.full_name||'—'} ${c.is_admin?'<span class="c-badge">Admin</span>':''}</div>
+          <div class="c-email">${c.email||'—'} • ${c.business_name||'No business'} • Joined ${joined}</div>
+        </div>
+        <div class="c-badge">ID: ${c.id.substring(0,6).toUpperCase()}</div>
+      </div>`;
+    });
+  }
+</script>
+</body>
+</html>
