@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Damyro — Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --forest-deep:   #0d1f15;
+    --forest-dark:   #132b1a;
+    --forest-mid:    #1e4028;
+    --forest-green:  #2d5e3a;
+    --moss:          #4a7c59;
+    --mist:          #7aab8a;
+    --foam:          #b2d4bc;
+    --sky-pale:      #c8dfe8;
+    --water-blue:    #6a9cb0;
+    --cascade-white: #e8f2ec;
+    --pure:          #ffffff;
+    --gold-accent:   #c9a84c;
+    --danger:        #c96a4c;
+    --text-primary:  #e8f2ec;
+    --text-muted:    #7aab8a;
+    --card-bg:       rgba(19,43,26,0.82);
+    --border:        rgba(178,212,188,0.15);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    min-height:100vh; font-family:"Inter",sans-serif;
+    background:linear-gradient(160deg, var(--forest-deep) 0%, #0a1a10 50%, #071510 100%);
+    color:var(--text-primary);
+  }
+  .bg-glow {
+    position:fixed; inset:0; pointer-events:none;
+    background:
+      radial-gradient(ellipse 50% 60% at 15% 40%, rgba(45,94,58,0.14) 0%, transparent 65%),
+      radial-gradient(ellipse 40% 50% at 90% 60%, rgba(106,156,176,0.10) 0%, transparent 60%);
+  }
+
+  .nav {
+    position:fixed; top:0; left:0; right:0; z-index:100;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:1rem 2rem;
+    background:rgba(13,31,21,0.88);
+    backdrop-filter:blur(16px);
+    border-bottom:1px solid var(--border);
+  }
+  .nav-logo { display:flex; align-items:center; gap:0.7rem; text-decoration:none; }
+  .nav-icon { width:36px; height:36px; background:linear-gradient(135deg,var(--moss),var(--water-blue)); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1rem; }
+  .nav-name { font-family:"Cormorant Garamond",serif; font-size:1.3rem; font-weight:300; letter-spacing:0.12em; color:var(--pure); }
+  .nav-right { display:flex; align-items:center; gap:1.2rem; }
+  .nav-email { font-size:0.8rem; color:var(--mist); }
+  .nav-back, .btn-signout {
+    color:var(--mist); text-decoration:none; font-size:0.85rem; letter-spacing:0.05em;
+    background:none; border:1px solid var(--border); border-radius:8px;
+    padding:0.5rem 1rem; cursor:pointer; font-family:"Inter",sans-serif; transition:all 0.2s;
+  }
+  .nav-back:hover, .btn-signout:hover { color:var(--foam); border-color:var(--moss); }
+
+  /* ── Login screen ───────────────────────────────────────── */
+  .login-wrap {
+    min-height:100vh; display:flex; align-items:center; justify-content:center;
+    padding:2rem; position:relative; z-index:10;
+  }
+  .login-card {
+    width:100%; max-width:400px;
+    background:var(--card-bg); border:1px solid var(--border);
+    border-radius:22px; padding:2.5rem 2rem;
+    backdrop-filter:blur(16px);
+    animation:fadeUp 0.5s ease both;
+  }
+  .login-icon { width:56px; height:56px; margin:0 auto 1.2rem; background:linear-gradient(135deg,var(--moss),var(--water-blue)); border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:1.5rem; }
+  .login-title { font-family:"Cormorant Garamond",serif; font-size:1.9rem; font-weight:300; text-align:center; color:var(--pure); margin-bottom:0.3rem; }
+  .login-sub { text-align:center; font-size:0.82rem; color:var(--mist); margin-bottom:1.8rem; }
+
+  .field { margin-bottom:1.1rem; }
+  .field label { display:block; font-size:0.75rem; letter-spacing:0.08em; text-transform:uppercase; color:var(--mist); margin-bottom:0.4rem; }
+  .field input {
+    width:100%; padding:0.8rem 1rem; background:rgba(255,255,255,0.04);
+    border:1px solid var(--border); border-radius:10px; color:var(--pure);
+    font-size:0.92rem; font-family:"Inter",sans-serif; transition:border-color 0.2s;
+  }
+  .field input:focus { outline:none; border-color:var(--moss); }
+
+  .btn-primary {
+    width:100%; padding:0.9rem; margin-top:0.4rem;
+    background:linear-gradient(135deg,var(--forest-green),var(--water-blue));
+    border:none; border-radius:12px; color:var(--pure);
+    font-size:0.9rem; font-weight:600; letter-spacing:0.04em;
+    cursor:pointer; transition:all 0.25s;
+  }
+  .btn-primary:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(45,94,58,0.4); }
+  .btn-primary:disabled { opacity:0.6; cursor:not-allowed; transform:none; box-shadow:none; }
+
+  .login-error {
+    display:none; background:rgba(201,106,76,0.12); border:1px solid rgba(201,106,76,0.35);
+    color:#e8b8a8; font-size:0.82rem; padding:0.7rem 1rem; border-radius:10px;
+    margin-bottom:1.1rem; line-height:1.5;
+  }
+  .login-error.show { display:block; }
+
+  /* ── Dashboard ───────────────────────────────────────────── */
+  .dash-wrap { display:none; max-width:1100px; margin:0 auto; padding:6.5rem 1.5rem 4rem; position:relative; z-index:10; }
+  .dash-header { display:flex; align-items:baseline; justify-content:space-between; flex-wrap:wrap; gap:0.8rem; margin-bottom:2rem; }
+  .dash-title { font-family:"Cormorant Garamond",serif; font-size:2.2rem; font-weight:300; color:var(--pure); }
+  .dash-count { font-size:0.85rem; color:var(--mist); }
+
+  .filter-tabs { display:flex; gap:0.5rem; margin-bottom:1.6rem; flex-wrap:wrap; }
+  .filter-tab {
+    background:rgba(255,255,255,0.04); border:1px solid var(--border); border-radius:50px;
+    padding:0.5rem 1.1rem; font-size:0.8rem; color:var(--mist); cursor:pointer;
+    font-family:"Inter",sans-serif; transition:all 0.2s;
+  }
+  .filter-tab.active { background:var(--forest-green); border-color:var(--forest-green); color:var(--pure); }
+  .filter-tab:hover:not(.active) { border-color:var(--moss); color:var(--foam); }
+
+  .booking-list { display:flex; flex-direction:column; gap:1rem; }
+  .booking-card {
+    background:var(--card-bg); border:1px solid var(--border); border-radius:18px;
+    padding:1.5rem; backdrop-filter:blur(16px); animation:fadeUp 0.4s ease both;
+  }
+  .bc-top { display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; margin-bottom:0.9rem; flex-wrap:wrap; }
+  .bc-name { font-family:"Cormorant Garamond",serif; font-size:1.4rem; color:var(--pure); font-weight:400; }
+  .bc-business { font-size:0.82rem; color:var(--mist); margin-top:0.15rem; }
+  .bc-pkg { display:inline-block; font-size:0.72rem; letter-spacing:0.06em; text-transform:uppercase; color:var(--gold-accent); background:rgba(201,168,76,0.1); border:1px solid rgba(201,168,76,0.25); padding:0.25rem 0.7rem; border-radius:50px; margin-top:0.4rem; }
+
+  .status-badge { font-size:0.72rem; font-weight:600; letter-spacing:0.05em; text-transform:uppercase; padding:0.35rem 0.8rem; border-radius:50px; white-space:nowrap; }
+  .status-badge.pending  { background:rgba(201,168,76,0.15); color:var(--gold-accent); border:1px solid rgba(201,168,76,0.3); }
+  .status-badge.accepted { background:rgba(74,124,89,0.2); color:var(--foam); border:1px solid rgba(74,124,89,0.4); }
+  .status-badge.declined { background:rgba(201,106,76,0.15); color:#e8b8a8; border:1px solid rgba(201,106,76,0.3); }
+
+  .bc-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(160px,1fr)); gap:0.7rem 1.2rem; margin:1rem 0; padding:1rem 0; border-top:1px solid var(--border); border-bottom:1px solid var(--border); }
+  .bc-field-label { font-size:0.68rem; letter-spacing:0.06em; text-transform:uppercase; color:var(--mist); margin-bottom:0.2rem; }
+  .bc-field-val { font-size:0.86rem; color:var(--foam); word-break:break-word; }
+  .bc-field-val a { color:var(--water-blue); }
+  .bc-req { font-size:0.85rem; color:var(--foam); line-height:1.6; margin-bottom:1rem; }
+
+  .bc-appt {
+    background:rgba(106,156,176,0.08); border:1px solid rgba(106,156,176,0.2);
+    border-radius:12px; padding:0.9rem 1rem; margin-bottom:1rem;
+    display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.6rem;
+  }
+  .bc-appt-info { font-size:0.85rem; color:var(--foam); }
+  .bc-appt-info strong { color:var(--pure); }
+  .bc-appt-empty { font-size:0.82rem; color:var(--mist); font-style:italic; }
+
+  .bc-actions { display:flex; gap:0.6rem; flex-wrap:wrap; }
+  .btn-sm {
+    padding:0.55rem 1rem; border-radius:10px; font-size:0.8rem; font-weight:600;
+    cursor:pointer; border:1px solid var(--border); background:rgba(255,255,255,0.04);
+    color:var(--foam); font-family:"Inter",sans-serif; transition:all 0.2s;
+  }
+  .btn-sm:hover { border-color:var(--moss); }
+  .btn-sm.accept  { background:rgba(74,124,89,0.2); border-color:rgba(74,124,89,0.4); color:var(--foam); }
+  .btn-sm.decline { background:rgba(201,106,76,0.14); border-color:rgba(201,106,76,0.3); color:#e8b8a8; }
+  .btn-sm.schedule{ background:rgba(106,156,176,0.16); border-color:rgba(106,156,176,0.35); color:var(--sky-pale); }
+  .btn-sm:disabled { opacity:0.5; cursor:not-allowed; }
+
+  .schedule-row { display:none; gap:0.6rem; margin-top:0.8rem; flex-wrap:wrap; align-items:center; }
+  .schedule-row.show { display:flex; }
+  .schedule-row input {
+    background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:8px;
+    padding:0.5rem 0.7rem; color:var(--pure); font-size:0.82rem; font-family:"Inter",sans-serif;
+  }
+
+  .empty-state { text-align:center; padding:4rem 1rem; color:var(--mist); }
+  .empty-state-icon { font-size:2.5rem; margin-bottom:1rem; opacity:0.6; }
+
+  .toast { position:fixed; bottom:2rem; left:50%; transform:translateX(-50%) translateY(100px); background:var(--forest-green); color:var(--pure); padding:0.8rem 1.8rem; border-radius:50px; font-size:0.86rem; font-weight:500; box-shadow:0 8px 24px rgba(0,0,0,0.3); transition:transform 0.4s ease; z-index:999; max-width:90vw; text-align:center; }
+  .toast.show { transform:translateX(-50%) translateY(0); }
+  .toast.err { background:var(--danger); }
+
+  @keyframes fadeUp { from{opacity:0; transform:translateY(18px);} to{opacity:1; transform:translateY(0);} }
+</style>
+</head>
+<body>
+<div class="bg-glow"></div>
+
+<nav class="nav">
+  <a href="index.html" class="nav-logo">
+    <div class="nav-icon">🌿</div>
+    <span class="nav-name">Damyro Admin</span>
+  </a>
+  <div class="nav-right" id="navRight">
+    <a href="index.html" class="nav-back">← Site</a>
+  </div>
+</nav>
+
+<!-- ══════════════ LOGIN SCREEN ══════════════ -->
+<div class="login-wrap" id="loginWrap">
+  <div class="login-card">
+    <div class="login-icon">🔐</div>
+    <div class="login-title">Admin Sign In</div>
+    <div class="login-sub">Sign in with your admin account to manage bookings.</div>
+
+    <div class="login-error" id="loginError"></div>
+
+    <div class="field">
+      <label for="loginEmail">Email</label>
+      <input type="email" id="loginEmail" autocomplete="username" placeholder="you@example.com"/>
+    </div>
+    <div class="field">
+      <label for="loginPassword">Password</label>
+      <input type="password" id="loginPassword" autocomplete="current-password" placeholder="••••••••"/>
+    </div>
+    <button class="btn-primary" id="loginBtn" onclick="doLogin()">Sign In</button>
+  </div>
+</div>
+
+<!-- ══════════════ DASHBOARD ══════════════ -->
+<div class="dash-wrap" id="dashWrap">
+  <div class="dash-header">
+    <div>
+      <div class="dash-title">Bookings</div>
+      <div class="dash-count" id="dashCount">Loading…</div>
+    </div>
+  </div>
+
+  <div class="filter-tabs">
+    <button class="filter-tab active" data-filter="all" onclick="setFilter('all')">All</button>
+    <button class="filter-tab" data-filter="pending" onclick="setFilter('pending')">Pending</button>
+    <button class="filter-tab" data-filter="accepted" onclick="setFilter('accepted')">Accepted</button>
+    <button class="filter-tab" data-filter="declined" onclick="setFilter('declined')">Declined</button>
+  </div>
+
+  <div class="booking-list" id="bookingList"></div>
+  <div class="empty-state" id="emptyState" style="display:none;">
+    <div class="empty-state-icon">📭</div>
+    <div>No bookings in this view yet.</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script>
+  // ═══════════════════════════════════════════════════════════
+  // AUTH: real Supabase email/password login, gated on the
+  // is_admin flag from the "profiles" table (see supabase-setup.sql).
+  // This page has NO signup form on purpose — create the one admin
+  // account from the Supabase dashboard (see supabase-setup.sql,
+  // section 4) rather than exposing a public "create admin" form.
+  // ═══════════════════════════════════════════════════════════
+
+  let allBookings = [];
+  let currentFilter = "all";
+  let currentUserEmail = "";
+
+  function showToast(msg, isErr) {
+    const t = document.getElementById("toast");
+    t.textContent = msg;
+    t.classList.toggle("err", !!isErr);
+    t.classList.add("show");
+    setTimeout(() => t.classList.remove("show"), 3200);
+  }
+
+  function showLoginError(msg) {
+    const el = document.getElementById("loginError");
+    el.textContent = msg;
+    el.classList.add("show");
+  }
+  function clearLoginError() {
+    document.getElementById("loginError").classList.remove("show");
+  }
+
+  async function doLogin() {
+    clearLoginError();
+    const email = document.getElementById("loginEmail").value.trim();
+    const password = document.getElementById("loginPassword").value;
+    if (!email || !password) { showLoginError("Enter both email and password."); return; }
+
+    const btn = document.getElementById("loginBtn");
+    btn.disabled = true; btn.textContent = "Signing in…";
+
+    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+
+    if (error) {
+      // Supabase returns a generic "Invalid login credentials" for both
+      // wrong password and unknown email — intentionally vague so this
+      // page never confirms/denies whether a given email has an account.
+      showLoginError("Sign in failed: " + error.message);
+      btn.disabled = false; btn.textContent = "Sign In";
+      return;
+    }
+
+    await checkAdminAndEnter(data.user);
+    btn.disabled = false; btn.textContent = "Sign In";
+  }
+
+  async function checkAdminAndEnter(user) {
+    // A successful login only proves this is a real account — it does
+    // NOT prove admin rights. Look up is_admin on their profiles row
+    // before showing any booking data. RLS on "bookings" enforces this
+    // server-side too (see supabase-setup.sql), so this check is a UX
+    // gate, not the actual security boundary.
+    const { data: profile, error } = await supabaseClient
+      .from("profiles")
+      .select("is_admin, email")
+      .eq("id", user.id)
+      .single();
+
+    if (error || !profile || profile.is_admin !== true) {
+      showLoginError("This account does not have admin access.");
+      await supabaseClient.auth.signOut();
+      return;
+    }
+
+    currentUserEmail = profile.email || user.email || "";
+    enterDashboard();
+  }
+
+  function enterDashboard() {
+    document.getElementById("loginWrap").style.display = "none";
+    document.getElementById("dashWrap").style.display = "block";
+    document.getElementById("navRight").innerHTML = `
+      <span class="nav-email">${escapeHtml(currentUserEmail)}</span>
+      <button class="btn-signout" onclick="doSignOut()">Sign Out</button>
+    `;
+    loadBookings();
+  }
+
+  async function doSignOut() {
+    await supabaseClient.auth.signOut();
+    window.location.reload();
+  }
+
+  // On page load, check for an existing session (so a refresh doesn't
+  // force re-login) before falling back to the login screen.
+  (async () => {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (session && session.user) {
+      await checkAdminAndEnter(session.user);
+    }
+  })();
+
+  // ═══════════════════════════════════════════════════════════
+  // DASHBOARD: load + render + act on bookings
+  // ═══════════════════════════════════════════════════════════
+
+  async function loadBookings() {
+    const { data, error } = await supabaseClient
+      .from("bookings")
+      .select("*")
+      .order("submitted_at", { ascending: false });
+
+    if (error) {
+      showToast("Could not load bookings: " + error.message, true);
+      return;
+    }
+    allBookings = data || [];
+    renderBookings();
+  }
+
+  function setFilter(f) {
+    currentFilter = f;
+    document.querySelectorAll(".filter-tab").forEach(t => t.classList.toggle("active", t.dataset.filter === f));
+    renderBookings();
+  }
+
+  function escapeHtml(s) {
+    if (s === null || s === undefined) return "";
+    return String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+  }
+
+  function fmtDateTime(iso) {
+    if (!iso) return "—";
+    try { return new Date(iso).toLocaleString(); } catch (e) { return iso; }
+  }
+
+  function renderBookings() {
+    const list = document.getElementById("bookingList");
+    const empty = document.getElementById("emptyState");
+    const filtered = currentFilter === "all" ? allBookings : allBookings.filter(b => b.status === currentFilter);
+
+    document.getElementById("dashCount").textContent =
+      `${allBookings.length} total • ${allBookings.filter(b=>b.status==='pending').length} pending`;
+
+    if (filtered.length === 0) {
+      list.innerHTML = ""; empty.style.display = "block"; return;
+    }
+    empty.style.display = "none";
+
+    list.innerHTML = filtered.map(b => {
+      const hasAppt = !!(b.appointment_date || b.appointment_time || b.assigned_time);
+      const apptLabel = [b.appointment_date, b.appointment_time].filter(Boolean).join(" · ") || b.assigned_time || "";
+      const rescheduled = (b.reschedule_count || 0) > 0;
+
+      return `
+        <div class="booking-card" data-id="${b.id}">
+          <div class="bc-top">
+            <div>
+              <div class="bc-name">${escapeHtml(b.full_name || "Unnamed")}</div>
+              <div class="bc-business">${escapeHtml(b.business_name || "")}</div>
+              <div class="bc-pkg">${escapeHtml(b.package || "—")}</div>
+            </div>
+            <div class="status-badge ${escapeHtml(b.status)}">${escapeHtml(b.status)}</div>
+          </div>
+
+          <div class="bc-grid">
+            <div><div class="bc-field-label">Email</div><div class="bc-field-val">${escapeHtml(b.email)}</div></div>
+            <div><div class="bc-field-label">Mobile</div><div class="bc-field-val">${escapeHtml(b.mobile)}</div></div>
+            <div><div class="bc-field-label">Location</div><div class="bc-field-val">${escapeHtml(b.location)}</div></div>
+            <div><div class="bc-field-label">Payment</div><div class="bc-field-val">${escapeHtml(b.payment_method)}</div></div>
+            <div><div class="bc-field-label">Submitted</div><div class="bc-field-val">${fmtDateTime(b.submitted_at)}</div></div>
+            <div><div class="bc-field-label">Budget</div><div class="bc-field-val">${escapeHtml(b.budget || "—")}</div></div>
+          </div>
+
+          ${b.requirements ? `<div class="bc-req"><strong>Requirements:</strong> ${escapeHtml(b.requirements)}</div>` : ""}
+
+          <div class="bc-appt">
+            ${hasAppt
+              ? `<div class="bc-appt-info">📅 <strong>${escapeHtml(apptLabel)}</strong>${rescheduled ? ` <span style="color:var(--mist)">(rescheduled ${b.reschedule_count}×)</span>` : ""}
+                  <div style="font-size:0.72rem;color:var(--mist);margin-top:0.3rem;">
+                    ${b.notified_at
+                      ? `✓ First-scheduling email attempted ${fmtDateTime(b.notified_at)}. Check Resend/function logs to confirm delivery — this only means the attempt was made.`
+                      : `⚠ No first-scheduling email recorded for this booking.`}
+                  </div>
+                </div>`
+              : `<div class="bc-appt-empty">No appointment time set yet.</div>`
+            }
+          </div>
+
+          <div class="bc-actions">
+            ${b.status !== "accepted" ? `<button class="btn-sm accept" onclick="updateStatus('${b.id}','accepted')">Accept</button>` : ""}
+            ${b.status !== "declined" ? `<button class="btn-sm decline" onclick="updateStatus('${b.id}','declined')">Decline</button>` : ""}
+            <button class="btn-sm schedule" onclick="toggleSchedule('${b.id}')">${hasAppt ? "Reschedule" : "Set Time"}</button>
+          </div>
+
+          <div class="schedule-row" id="sched-${b.id}">
+            <input type="date" id="date-${b.id}" value="${b.appointment_date || ''}"/>
+            <input type="time" id="time-${b.id}" value="${(b.appointment_time||'').match(/^\d{2}:\d{2}/) ? b.appointment_time : ''}"/>
+            <button class="btn-sm accept" onclick="saveSchedule('${b.id}')">Save</button>
+          </div>
+        </div>
+      `;
+    }).join("");
+  }
+
+  function toggleSchedule(id) {
+    document.getElementById(`sched-${id}`).classList.toggle("show");
+  }
+
+  async function updateStatus(id, status) {
+    const patch = { status };
+    if (status === "accepted") patch.accepted_at = new Date().toISOString();
+
+    const { error } = await supabaseClient.from("bookings").update(patch).eq("id", id);
+    if (error) { showToast("Update failed: " + error.message, true); return; }
+
+    const b = allBookings.find(x => x.id === id);
+    if (b) Object.assign(b, patch);
+    showToast(status === "accepted" ? "Booking accepted." : "Booking declined.");
+    renderBookings();
+  }
+
+  async function saveSchedule(id) {
+    const dateVal = document.getElementById(`date-${id}`).value;
+    const timeVal = document.getElementById(`time-${id}`).value;
+    if (!dateVal && !timeVal) { showToast("Pick a date or time first.", true); return; }
+
+    const b = allBookings.find(x => x.id === id);
+    const isReschedule = !!(b && (b.appointment_date || b.appointment_time));
+
+    const patch = {
+      appointment_date: dateVal || null,
+      appointment_time: timeVal || null,
+    };
+    if (isReschedule) {
+      // Increment server-side-known count so re-running this doesn't
+      // double count on a retried request — read current value first.
+      patch.reschedule_count = (b.reschedule_count || 0) + 1;
+    }
+
+    const { error } = await supabaseClient.from("bookings").update(patch).eq("id", id);
+    if (error) { showToast("Could not save time: " + error.message, true); return; }
+
+    if (b) Object.assign(b, patch);
+    showToast(isReschedule ? "Appointment rescheduled." : "Appointment time set.");
+    document.getElementById(`sched-${id}`).classList.remove("show");
+    renderBookings();
+  }
+</script>
+</body>
+</html>
