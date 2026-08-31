@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Damyro — Book Your Appointment</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --forest-deep:   #0d1f15;
+    --forest-dark:   #132b1a;
+    --forest-mid:    #1e4028;
+    --forest-green:  #2d5e3a;
+    --moss:          #4a7c59;
+    --mist:          #7aab8a;
+    --foam:          #b2d4bc;
+    --sky-pale:      #c8dfe8;
+    --water-blue:    #6a9cb0;
+    --cascade-white: #e8f2ec;
+    --pure:          #ffffff;
+    --gold-accent:   #c9a84c;
+    --text-primary:  #e8f2ec;
+    --text-muted:    #7aab8a;
+    --card-bg:       rgba(19,43,26,0.82);
+    --border:        rgba(178,212,188,0.15);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    min-height:100vh; font-family:"Inter",sans-serif;
+    background:linear-gradient(160deg,var(--forest-deep) 0%,#0a1a10 50%,#071510 100%);
+    color:var(--text-primary); padding:0 1rem 5rem;
+  }
+  .bg-glow { position:fixed; inset:0; pointer-events:none; background:radial-gradient(ellipse 60% 50% at 25% 35%,rgba(45,94,58,0.15) 0%,transparent 65%),radial-gradient(ellipse 40% 50% at 80% 65%,rgba(106,156,176,0.10) 0%,transparent 60%); }
+
+  .nav { position:fixed; top:0; left:0; right:0; z-index:100; display:flex; align-items:center; justify-content:space-between; padding:1rem 2rem; background:rgba(13,31,21,0.88); backdrop-filter:blur(16px); border-bottom:1px solid var(--border); }
+  .nav-logo { display:flex; align-items:center; gap:0.7rem; }
+  .nav-icon { width:36px; height:36px; background:linear-gradient(135deg,var(--moss),var(--water-blue)); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1rem; }
+  .nav-name { font-family:"Cormorant Garamond",serif; font-size:1.3rem; font-weight:300; letter-spacing:0.12em; }
+  .nav-back { color:var(--mist); text-decoration:none; font-size:0.85rem; letter-spacing:0.05em; transition:color 0.2s; }
+  .nav-back:hover { color:var(--foam); }
+
+  .progress-bar { position:fixed; top:64px; left:0; right:0; z-index:99; height:3px; background:rgba(178,212,188,0.1); }
+  .progress-fill { height:100%; width:100%; background:linear-gradient(90deg,var(--forest-green),var(--water-blue)); }
+  .progress-label { position:fixed; top:74px; right:2rem; z-index:99; font-size:0.72rem; color:var(--mist); letter-spacing:0.08em; }
+
+  .container { max-width:640px; margin:0 auto; padding-top:6rem; position:relative; z-index:10; }
+  .section-header { text-align:center; margin-bottom:2.5rem; }
+  .section-eyebrow { font-size:0.72rem; letter-spacing:0.25em; text-transform:uppercase; color:var(--mist); margin-bottom:0.8rem; }
+  .section-title { font-family:"Cormorant Garamond",serif; font-size:2.3rem; font-weight:300; color:var(--pure); }
+  .section-title span { color:var(--foam); }
+  .section-desc { color:var(--mist); font-size:0.88rem; margin-top:0.5rem; line-height:1.7; }
+
+  /* Selected package badge */
+  .pkg-badge { display:inline-flex; align-items:center; gap:0.5rem; padding:0.5rem 1.2rem; background:rgba(45,94,58,0.3); border:1px solid rgba(74,124,89,0.35); border-radius:50px; font-size:0.82rem; color:var(--foam); margin-bottom:2rem; }
+
+  .form-card { background:var(--card-bg); border:1px solid var(--border); border-radius:22px; padding:2.2rem; backdrop-filter:blur(16px); }
+  .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:1.2rem; }
+  .form-full { grid-column:1/-1; }
+
+  .form-group { display:flex; flex-direction:column; gap:0.45rem; }
+  .form-label { font-size:0.76rem; letter-spacing:0.08em; text-transform:uppercase; color:var(--mist); }
+  .form-input, .form-select, .form-textarea {
+    padding:0.85rem 1.1rem; background:rgba(13,31,21,0.7);
+    border:1px solid var(--border); border-radius:12px;
+    color:var(--text-primary); font-size:0.93rem; font-family:"Inter",sans-serif;
+    outline:none; transition:border-color 0.2s, box-shadow 0.2s;
+  }
+  .form-input::placeholder, .form-textarea::placeholder { color:rgba(122,171,138,0.45); }
+  .form-input:focus, .form-select:focus, .form-textarea:focus { border-color:var(--moss); box-shadow:0 0 0 3px rgba(74,124,89,0.18); }
+  .form-select { appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%237aab8a' viewBox='0 0 24 24'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 1rem center; cursor:pointer; }
+  .form-select option { background:var(--forest-dark); }
+  .form-textarea { resize:vertical; min-height:80px; }
+
+  .divider-line { height:1px; background:var(--border); margin:1.5rem 0; }
+
+  /* Payment section */
+  .payment-section { background:rgba(13,31,21,0.5); border:1px solid rgba(201,168,76,0.2); border-radius:16px; padding:1.4rem; }
+  .payment-title { font-size:0.78rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--gold-accent); margin-bottom:1rem; }
+  .payment-methods { display:flex; flex-wrap:wrap; gap:0.6rem; }
+  .pay-chip { padding:0.5rem 1rem; background:rgba(13,31,21,0.6); border:1px solid var(--border); border-radius:10px; font-size:0.8rem; color:var(--mist); cursor:pointer; transition:all 0.2s; }
+  .pay-chip.selected { border-color:var(--gold-accent); color:var(--gold-accent); background:rgba(201,168,76,0.1); }
+
+  .notice-box { background:rgba(106,156,176,0.1); border:1px solid rgba(106,156,176,0.2); border-radius:12px; padding:1rem 1.2rem; font-size:0.82rem; color:var(--sky-pale); line-height:1.6; margin-top:1.2rem; }
+  .notice-box strong { color:var(--foam); }
+
+  /* Notification toggle */
+  .notif-row { display:flex; align-items:center; justify-content:space-between; padding:0.8rem 0; }
+  .notif-label { font-size:0.88rem; color:var(--foam); }
+  .notif-sub { font-size:0.75rem; color:var(--mist); margin-top:0.15rem; }
+  .toggle { position:relative; width:44px; height:24px; flex-shrink:0; }
+  .toggle input { opacity:0; width:0; height:0; }
+  .toggle-slider { position:absolute; inset:0; background:rgba(45,94,58,0.3); border-radius:24px; cursor:pointer; transition:background 0.3s; border:1px solid var(--border); }
+  .toggle-slider::before { content:''; position:absolute; width:18px; height:18px; left:3px; top:2px; background:var(--mist); border-radius:50%; transition:transform 0.3s; }
+  .toggle input:checked + .toggle-slider { background:var(--forest-green); border-color:var(--moss); }
+  .toggle input:checked + .toggle-slider::before { transform:translateX(20px); background:var(--pure); }
+
+  .btn-submit { width:100%; margin-top:2rem; padding:1.1rem; background:linear-gradient(135deg,var(--forest-green),var(--water-blue)); border:none; border-radius:14px; color:var(--pure); font-size:1rem; font-weight:600; letter-spacing:0.06em; cursor:pointer; transition:all 0.3s; display:flex; align-items:center; justify-content:center; gap:0.8rem; }
+  .btn-submit:hover { transform:translateY(-3px); box-shadow:0 12px 32px rgba(45,94,58,0.5); }
+
+  /* Toast */
+  .toast { position:fixed; bottom:2rem; left:50%; transform:translateX(-50%) translateY(100px); background:var(--forest-green); color:var(--pure); padding:0.8rem 1.8rem; border-radius:50px; font-size:0.88rem; font-weight:500; box-shadow:0 8px 24px rgba(0,0,0,0.3); transition:transform 0.4s ease; z-index:999; }
+  .toast.show { transform:translateX(-50%) translateY(0); }
+
+  /* Success overlay */
+  .success-overlay { position:fixed; inset:0; background:rgba(7,21,16,0.95); display:none; flex-direction:column; align-items:center; justify-content:center; z-index:999; text-align:center; padding:2rem; }
+  .success-overlay.show { display:flex; animation:fadeIn 0.5s ease; }
+  .success-icon { font-size:4rem; margin-bottom:1.5rem; }
+  .success-title { font-family:"Cormorant Garamond",serif; font-size:2.5rem; font-weight:300; color:var(--pure); margin-bottom:0.8rem; }
+  .success-msg { color:var(--mist); font-size:0.95rem; line-height:1.7; max-width:400px; margin-bottom:2rem; }
+  .btn-dash { padding:1rem 2.5rem; background:linear-gradient(135deg,var(--forest-green),var(--water-blue)); border:none; border-radius:50px; color:var(--pure); font-size:0.95rem; font-weight:600; cursor:pointer; }
+
+  @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+
+  @media (max-width:500px) { .form-grid { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+<div class="bg-glow"></div>
+
+<nav class="nav">
+  <div class="nav-logo"><div class="nav-icon">🌿</div><span class="nav-name">Damyro</span></div>
+  <a href="index.html" class="nav-back">← Home</a>
+</nav>
+<div class="progress-bar"><div class="progress-fill"></div></div>
+<div class="progress-label">Step 3 of 3</div>
+
+<main class="container">
+  <div class="section-header">
+    <div class="section-eyebrow">Appointment Booking</div>
+    <h1 class="section-title">Book Your <span>Consultation</span></h1>
+    <p class="section-desc">Fill in your details and submit. We'll review and confirm your appointment via your dashboard.</p>
+  </div>
+
+  <div style="text-align:center">
+    <div class="pkg-badge" id="pkgBadge">
+      <span>📦</span> <span id="pkgName">Loading selected package...</span>
+    </div>
+  </div>
+
+  <div class="form-card">
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="form-label">Full Name *</label>
+        <input type="text" class="form-input" id="fullName" placeholder="Your full name"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Business Name *</label>
+        <input type="text" class="form-input" id="businessName" placeholder="Your business name"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email Address *</label>
+        <input type="email" class="form-input" id="email" placeholder="yourname@gmail.com"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Mobile Number *</label>
+        <input type="tel" class="form-input" id="mobile" placeholder="+91 98765 43210"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">State / City *</label>
+        <input type="text" class="form-input" id="location" placeholder="e.g. Assam, Guwahati"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Preferred Language</label>
+        <select class="form-select" id="lang">
+          <option value="English">English</option>
+          <option value="Hindi">Hindi</option>
+          <option value="Assamese">Assamese</option>
+          <option value="Bengali">Bengali</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="form-group form-full">
+        <label class="form-label">Describe Your Project / Requirements</label>
+        <textarea class="form-textarea" id="requirements" placeholder="Tell us about your project goals, timeline, and any specific requirements..."></textarea>
+      </div>
+    </div>
+
+    <div class="divider-line"></div>
+
+    <!-- Payment -->
+    <div class="payment-section">
+      <div class="payment-title">💳 Preferred Payment Method</div>
+      <div class="payment-methods" id="payMethods">
+        <div class="pay-chip selected" onclick="selectPay(this, 'UPI')">UPI / GPay</div>
+        <div class="pay-chip" onclick="selectPay(this, 'Razorpay')">Razorpay</div>
+        <div class="pay-chip" onclick="selectPay(this, 'Net Banking')">Net Banking</div>
+        <div class="pay-chip" onclick="selectPay(this, 'Card')">Debit/Credit Card</div>
+        <div class="pay-chip" onclick="selectPay(this, 'Discuss Later')">Discuss Later</div>
+      </div>
+      <div class="notice-box">
+        <strong>🔒 No payment required now.</strong> Payment will be discussed after your appointment request is reviewed and accepted. We'll reach out using the email or mobile number you provide below.
+      </div>
+    </div>
+
+    <div class="divider-line"></div>
+
+    <!-- Notifications -->
+    <div>
+      <div style="font-size:0.76rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--mist);margin-bottom:0.8rem;">🔔 Notifications</div>
+      <div class="notif-row">
+        <div>
+          <div class="notif-label">Browser / App Notifications</div>
+          <div class="notif-sub">Get notified when your appointment is accepted</div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="notifToggle" checked/>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div class="notif-row">
+        <div>
+          <div class="notif-label">Email Updates</div>
+          <div class="notif-sub">Receive confirmation & meeting link via email</div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="emailNotif" checked/>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+    </div>
+
+    <button class="btn-submit" onclick="submitBooking()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12v6a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h6"/><path d="M16 2l6 6-10 10H6v-6z"/></svg>
+      Submit Appointment Request
+    </button>
+  </div>
+</main>
+
+<!-- Success Overlay -->
+<div class="success-overlay" id="successOverlay">
+  <div class="success-icon">🌿</div>
+  <div class="success-title">Request Submitted!</div>
+  <p class="success-msg">Your appointment request has been sent. Our team will review it and reach out to you directly by email or phone to confirm your appointment time.</p>
+  <button class="btn-dash" onclick="window.location.href='index.html'">Back to Home</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script>
+  // No login required. Reads the package + questionnaire answers saved
+  // in sessionStorage by questionnaire.html / packages.html. Contact
+  // fields are typed directly on this page since there's no account
+  // to pull them from.
+  let questionnaire = null;
+
+  (() => {
+    const raw = sessionStorage.getItem("damyroQuestionnaire");
+    if (raw) {
+      try { questionnaire = JSON.parse(raw); } catch (e) { questionnaire = null; }
+    }
+    const pkg = (questionnaire && questionnaire.selected_package) || "Professional";
+    document.getElementById("pkgName").textContent = pkg + " Package";
+
+    // If they already typed a business name in the questionnaire, prefill it
+    if (questionnaire && questionnaire.business_name) {
+      document.getElementById("businessName").value = questionnaire.business_name;
+    }
+  })();
+
+  let selectedPay = "UPI";
+  function selectPay(el, method) {
+    document.querySelectorAll(".pay-chip").forEach(c => c.classList.remove("selected"));
+    el.classList.add("selected");
+    selectedPay = method;
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById("toast");
+    t.textContent = msg; t.classList.add("show");
+    setTimeout(() => t.classList.remove("show"), 2800);
+  }
+
+  async function submitBooking() {
+    const name     = document.getElementById("fullName").value.trim();
+    const bName    = document.getElementById("businessName").value.trim();
+    const email    = document.getElementById("email").value.trim();
+    const mobile   = document.getElementById("mobile").value.trim();
+    const location = document.getElementById("location").value.trim();
+
+    if (!name)   { showToast("❌ Please enter your name."); return; }
+    if (!bName)  { showToast("❌ Please enter your business name."); return; }
+    if (!email)  { showToast("❌ Please enter your email."); return; }
+    if (!mobile) { showToast("❌ Please enter your mobile number."); return; }
+    if (!location){ showToast("❌ Please enter your location."); return; }
+
+    const pkg = (questionnaire && questionnaire.selected_package) || "Professional";
+
+    // No .select() chained here on purpose: the anon key has an
+    // insert-only policy on this table (no select policy), so asking
+    // PostgREST to read the row back after inserting it would fail
+    // even though the insert itself succeeded — which would show the
+    // customer a false "could not submit" error on a booking that
+    // actually went through.
+    const { error } = await supabaseClient
+      .from("bookings")
+      .insert({
+        status: "pending",
+        package: pkg,
+        full_name: name,
+        business_name: bName,
+        email: email,
+        mobile: mobile,
+        location: location,
+        payment_method: selectedPay,
+        requirements: document.getElementById("requirements").value.trim(),
+        language: document.getElementById("lang").value,
+        notif_browser: document.getElementById("notifToggle").checked,
+        notif_email: document.getElementById("emailNotif").checked,
+        website_type: (questionnaire && questionnaire.website_type) || null,
+        template_style: (questionnaire && questionnaire.template_style) || null,
+        budget: (questionnaire && questionnaire.budget) || null
+      });
+
+    if (error) {
+      showToast("❌ Could not submit: " + error.message, 4000);
+      return;
+    }
+
+    // Request browser notification permission
+    if (document.getElementById("notifToggle").checked && "Notification" in window) {
+      Notification.requestPermission().then(perm => {
+        if (perm === "granted") {
+          new Notification("Damyro — Booking Submitted!", {
+            body: "Your appointment request has been received. We'll be in touch to confirm.",
+            icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌿</text></svg>"
+          });
+        }
+      });
+    }
+
+    sessionStorage.removeItem("damyroQuestionnaire");
+    document.getElementById("successOverlay").classList.add("show");
+  }
+</script>
+</body>
+</html>
