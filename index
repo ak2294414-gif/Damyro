@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Nexus AI Workspace</title>
+
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        colors: {
+          slate: {
+            925: '#0b0f19',
+            950: '#05070d',
+          },
+          violet: {
+            450: '#8b6ff2',
+            550: '#7c4dff',
+          }
+        },
+        animation: {
+          'fade-in': 'fadeIn 0.3s ease-in-out',
+          'slide-up': 'slideUp 0.25s ease-out',
+          'pulse-slow': 'pulse 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+          'typing-bounce': 'typingBounce 1.2s infinite ease-in-out',
+        },
+        keyframes: {
+          fadeIn: { '0%': { opacity: 0 }, '100%': { opacity: 1 } },
+          slideUp: { '0%': { opacity: 0, transform: 'translateY(8px)' }, '100%': { opacity: 1, transform: 'translateY(0)' } },
+          typingBounce: { '0%, 80%, 100%': { transform: 'scale(0.6)', opacity: 0.4 }, '40%': { transform: 'scale(1)', opacity: 1 } },
+        }
+      }
+    }
+  }
+</script>
+
+<!-- Supabase JS Client -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<!-- Lucide Icons -->
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+
+<!-- Marked.js (Markdown rendering) -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+<!-- Highlight.js (Syntax highlighting) -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
+<style>
+  :root {
+    --scrollbar-track: #0f1420;
+    --scrollbar-thumb: #2d3548;
+    --scrollbar-thumb-hover: #3d4560;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    height: 100%;
+    margin: 0;
+    background-color: #05070d;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    overscroll-behavior: none;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: var(--scrollbar-track); }
+  ::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 8px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-hover); }
+
+  /* Glassmorphic panel base */
+  .glass-panel {
+    background: rgba(17, 22, 36, 0.65);
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    border: 1px solid rgba(148, 130, 255, 0.08);
+  }
+
+  .glass-panel-solid {
+    background: rgba(13, 17, 28, 0.92);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid rgba(148, 130, 255, 0.1);
+  }
+
+  /* Gradient text */
+  .gradient-text {
+    background: linear-gradient(135deg, #a78bfa 0%, #818cf8 50%, #7c4dff 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  /* Violet glow effects */
+  .glow-violet {
+    box-shadow: 0 0 0 1px rgba(139, 111, 242, 0.15), 0 8px 24px -8px rgba(124, 77, 255, 0.35);
+  }
+  .glow-violet-sm {
+    box-shadow: 0 0 0 1px rgba(139, 111, 242, 0.12), 0 4px 12px -4px rgba(124, 77, 255, 0.25);
+  }
+
+  .btn-gradient {
+    background: linear-gradient(135deg, #8b6ff2 0%, #7c4dff 100%);
+    transition: all 0.2s ease;
+  }
+  .btn-gradient:hover {
+    background: linear-gradient(135deg, #9b7ff7 0%, #8c5dff 100%);
+    box-shadow: 0 4px 20px -4px rgba(124, 77, 255, 0.5);
+    transform: translateY(-1px);
+  }
+  .btn-gradient:active { transform: translateY(0); }
+  .btn-gradient:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+
+  /* Sidebar session item */
+  .session-item {
+    transition: all 0.15s ease;
+    border: 1px solid transparent;
+  }
+  .session-item:hover {
+    background: rgba(139, 111, 242, 0.08);
+    border-color: rgba(139, 111, 242, 0.12);
+  }
+  .session-item.active {
+    background: rgba(139, 111, 242, 0.14);
+    border-color: rgba(139, 111, 242, 0.25);
+  }
+
+  /* Message bubbles */
+  .msg-user {
+    background: linear-gradient(135deg, rgba(139, 111, 242, 0.18) 0%, rgba(124, 77, 255, 0.12) 100%);
+    border: 1px solid rgba(139, 111, 242, 0.2);
+  }
+  .msg-ai {
+    background: rgba(22, 27, 41, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  /* Markdown content styling */
+  .md-content { line-height: 1.7; color: #e2e5ec; }
+  .md-content > *:first-child { margin-top: 0 !important; }
+  .md-content > *:last-child { margin-bottom: 0 !important; }
+  .md-content p { margin: 0.6em 0; }
+  .md-content h1, .md-content h2, .md-content h3 {
+    font-weight: 600; margin: 1em 0 0.5em 0; color: #f1f2f6;
+  }
+  .md-content h1 { font-size: 1.4em; }
+  .md-content h2 { font-size: 1.2em; }
+  .md-content h3 { font-size: 1.05em; }
+  .md-content ul, .md-content ol { margin: 0.5em 0; padding-left: 1.4em; }
+  .md-content li { margin: 0.25em 0; }
+  .md-content a { color: #a78bfa; text-decoration: underline; text-underline-offset: 2px; }
+  .md-content blockquote {
+    border-left: 3px solid #7c4dff;
+    padding-left: 1em;
+    margin: 0.75em 0;
+    color: #b4b8c4;
+    font-style: italic;
+  }
+  .md-content code:not(pre code) {
+    background: rgba(139, 111, 242, 0.15);
+    color: #c4b5fd;
+    padding: 0.15em 0.4em;
+    border-radius: 4px;
+    font-size: 0.88em;
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  }
+  .md-content table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 0.75em 0;
+    font-size: 0.9em;
+  }
+  .md-content th, .md-content td {
+    border: 1px solid rgba(255,255,255,0.1);
+    padding: 0.5em 0.75em;
+    text-align: left;
+  }
+  .md-content th { background: rgba(139, 111, 242, 0.1); }
+
+  /* Code block wrapper */
+  .code-block-wrapper {
+    position: relative;
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 0.85em 0;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: #0d1117;
+  }
+  .code-block-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5em 0.9em;
+    background: rgba(255,255,255,0.03);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    font-size: 0.75em;
+    color: #8a90a2;
+    font-family: monospace;
+  }
+  .code-block-wrapper pre {
+    margin: 0 !important;
+    padding: 1em !important;
+    overflow-x: auto;
+    font-size: 0.85em;
+  }
+  .copy-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.3em;
+    padding: 0.25em 0.6em;
+    border-radius: 6px;
+    background: rgba(255,255,255,0.05);
+    color: #b4b8c4;
+    transition: all 0.15s ease;
+    cursor: pointer;
+    font-size: 0.85em;
+  }
+  .copy-btn:hover { background: rgba(139, 111, 242, 0.2); color: #e2e5ec; }
+
+  /* Auto-expanding textarea */
+  #chat-input {
+    resize: none;
+    max-height: 200px;
+    scrollbar-width: thin;
+  }
+
+  /* Typing indicator */
+  .typing-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #a78bfa;
+    display: inline-block;
+    animation: typingBounce 1.2s infinite ease-in-out;
+  }
+  .typing-dot:nth-child(2) { animation-delay: 0.15s; }
+  .typing-dot:nth-child(3) { animation-delay: 0.3s; }
+
+  /* Quick tool chips */
+  .tool-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35em;
+    padding: 0.4em 0.85em;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.8em;
+    color: #b4b8c4;
+    white-space: nowrap;
+    transition: all 0.15s ease;
+    cursor: pointer;
+  }
+  .tool-chip:hover {
+    background: rgba(139, 111, 242, 0.14);
+    border-color: rgba(139, 111, 242, 0.3);
+    color: #e2e5ec;
+  }
+
+  /* Modal backdrop */
+  .modal-backdrop {
+    background: rgba(5, 7, 13, 0.75);
+    backdrop-filter: blur(6px);
+  }
+
+  /* Status dot */
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .status-online { background: #4ade80; box-shadow: 0 0 8px rgba(74, 222, 128, 0.6); }
+  .status-offline { background: #f87171; box-shadow: 0 0 8px rgba(248, 113, 113, 0.5); }
+  .status-warn { background: #fbbf24; box-shadow: 0 0 8px rgba(251, 191, 36, 0.5); }
+
+  /* Sandbox panel */
+  #sandbox-iframe {
+    background: white;
+    border: none;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* Toast notifications */
+  .toast {
+    animation: slideUp 0.25s ease-out;
+  }
+
+  /* Input focus ring */
+  .input-focus:focus {
+    outline: none;
+    border-color: rgba(139, 111, 242, 0.5);
+    box-shadow: 0 0 0 3px rgba(139, 111, 242, 0.12);
+  }
+
+  /* Mobile sidebar overlay */
+  .sidebar-overlay {
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(2px);
+  }
+
+  /* Attachment chip */
+  .attachment-chip {
+    display: flex;
+    align-items: center;
+    gap: 0.4em;
+    background: rgba(139, 111, 242, 0.1);
+    border: 1px solid rgba(139, 111, 242, 0.2);
+    border-radius: 8px;
+    padding: 0.35em 0.6em;
+    font-size: 0.8em;
+    color: #c4b5fd;
+  }
+
+  @media (max-width: 768px) {
+    #sidebar {
+      position: fixed;
+      z-index: 40;
+      height: 100%;
+      transform: translateX(-100%);
+      transition: transform 0.25s ease;
+    }
+    #sidebar.open { transform: translateX(0); }
+  }
+</style>
+</head>
+<body class="h-full w-full text-slate-200 antialiased overflow-hidden">
+
+<div id="app" class="flex h-full w-full relative">
+
+  <!-- ============ MOBILE OVERLAY ============ -->
+  <div id="sidebar-overlay" class="sidebar-overlay fixed inset-0 z-30 hidden md:hidden"></div>
+
+  <!-- ============ LEFT SIDEBAR ============ -->
+  <aside id="sidebar" class="glass-panel-solid w-[280px] shrink-0 flex flex-col h-full border-r border-white/5">
+
+    <!-- Logo / Brand -->
+    <div class="flex items-center justify-between px-4 py-4 border-b border-white/5">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-lg btn-gradient flex items-center justify-center glow-violet-sm">
+          <i data-lucide="sparkles" class="w-4.5 h-4.5 text-white" style="width:18px;height:18px;"></i>
+        </div>
+        <span class="font-semibold text-[15px] tracking-tight text-white">Nexus<span class="gradient-text">AI</span></span>
+      </div>
+      <button id="close-sidebar-btn" class="md:hidden text-slate-400 hover:text-white p-1">
+        <i data-lucide="x" style="width:18px;height:18px;"></i>
+      </button>
+    </div>
+
+    <!-- New Chat Button -->
+    <div class="px-3 pt-3">
+      <button id="new-chat-btn" class="btn-gradient w-full flex items-center justify-center gap-2 text-white font-medium text-sm py-2.5 rounded-xl glow-violet-sm">
+        <i data-lucide="plus" style="width:16px;height:16px;"></i>
+        New Chat
+      </button>
+    </div>
+
+    <!-- Search sessions -->
+    <div class="px-3 pt-3">
+      <div class="relative">
+        <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" style="width:14px;height:14px;"></i>
+        <input id="session-search" type="text" placeholder="Search chats..."
+          class="input-focus w-full bg-white/[0.03] border border-white/[0.06] rounded-lg pl-8 pr-3 py-2 text-xs text-slate-300 placeholder-slate-500" />
+      </div>
+    </div>
+
+    <!-- Session History -->
+    <div class="flex-1 overflow-y-auto px-3 pt-3 pb-2 space-y-0.5">
+      <div class="px-1 pb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-500">Recent</div>
+      <div id="session-list" class="space-y-0.5">
+        <!-- session items injected by JS -->
+        <div class="flex flex-col items-center justify-center text-center py-8 text-slate-500 gap-2" id="session-empty-state">
+          <i data-lucide="message-square-dashed" style="width:28px;height:28px;" class="opacity-40"></i>
+          <p class="text-xs opacity-60 max-w-[180px]">No conversations yet. Start a new chat to begin.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- System Prompt Editor (collapsible) -->
+    <div class="border-t border-white/5 px-3 py-3">
+      <button id="toggle-sysprompt-btn" class="w-full flex items-center justify-between text-xs font-medium text-slate-300 hover:text-white py-1.5">
+        <span class="flex items-center gap-2">
+          <i data-lucide="terminal-square" style="width:14px;height:14px;" class="text-violet-400"></i>
+          System Prompt
+        </span>
+        <i data-lucide="chevron-down" id="sysprompt-chevron" style="width:14px;height:14px;" class="transition-transform"></i>
+      </button>
+      <div id="sysprompt-panel" class="hidden mt-2 space-y-2">
+        <textarea id="system-prompt-input"
+          class="input-focus w-full bg-white/[0.03] border border-white/[0.06] rounded-lg p-2.5 text-xs text-slate-300 placeholder-slate-500 resize-none h-24"
+          placeholder="You are a helpful, precise AI assistant...">You are Nexus, a highly capable AI assistant. Be concise, accurate, and helpful. When writing code, use best practices and explain your reasoning briefly.</textarea>
+        <button id="save-sysprompt-btn" class="w-full text-xs bg-white/[0.05] hover:bg-white/[0.08] text-slate-300 rounded-lg py-1.5 transition-colors">
+          Save Prompt
+        </button>
+      </div>
+    </div>
+
+    <!-- Bottom: Settings + User -->
+    <div class="border-t border-white/5 px-3 py-3 flex items-center gap-2">
+      <button id="open-settings-btn" class="flex-1 flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-white/[0.05] transition-colors text-left">
+        <div class="w-7 h-7 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shrink-0">
+          <i data-lucide="user" style="width:14px;height:14px;" class="text-white"></i>
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="text-xs font-medium text-white truncate">Workspace</p>
+          <p class="text-[10px] text-slate-500 truncate" id="sidebar-status-text">Configure API keys</p>
+        </div>
+      </button>
+      <button id="open-settings-icon-btn" class="p-2 rounded-lg hover:bg-white/[0.05] text-slate-400 hover:text-white transition-colors">
+        <i data-lucide="settings" style="width:16px;height:16px;"></i>
+      </button>
+    </div>
+  </aside>
+
+  <!-- ============ MAIN WORKSPACE ============ -->
+  <main class="flex-1 flex flex-col h-full min-w-0 relative">
+
+    <!-- Header -->
+    <header class="glass-panel flex items-center justify-between px-4 py-3 border-b border-white/5 shrink-0 z-10">
+      <div class="flex items-center gap-3 min-w-0">
+        <button id="open-sidebar-btn" class="md:hidden text-slate-400 hover:text-white p-1 shrink-0">
+          <i data-lucide="panel-left" style="width:20px;height:20px;"></i>
+        </button>
+
+        <!-- Model Selector -->
+        <div class="relative shrink-0">
+          <button id="model-selector-btn" class="flex items-center gap-2 bg-white/[0.04] hover:bg-white/[0.07] border border-white/[0.07] rounded-lg px-3 py-1.5 transition-colors">
+            <i data-lucide="brain-circuit" style="width:15px;height:15px;" class="text-violet-400"></i>
+            <span id="current-model-label" class="text-xs font-medium text-slate-200">Gemini 1.5 Pro</span>
+            <i data-lucide="chevron-down" style="width:13px;height:13px;" class="text-slate-500"></i>
+          </button>
+
+          <div id="model-dropdown" class="hidden absolute top-full left-0 mt-2 w-64 glass-panel-solid rounded-xl shadow-2xl overflow-hidden z-20 py-1.5">
+            <button data-model="gemini-1.5-pro" class="model-option w-full flex items-start gap-3 px-3 py-2.5 hover:bg-white/[0.05] text-left transition-colors">
+              <i data-lucide="brain-circuit" style="width:16px;height:16px;" class="text-violet-400 mt-0.5 shrink-0"></i>
+              <div>
+                <p class="text-xs font-medium text-white">Gemini 1.5 Pro</p>
+                <p class="text-[10px] text-slate-500">Best for complex reasoning & code</p>
+              </div>
+            </button>
+            <button data-model="gemini-1.5-flash" class="model-option w-full flex items-start gap-3 px-3 py-2.5 hover:bg-white/[0.05] text-left transition-colors">
+              <i data-lucide="zap" style="width:16px;height:16px;" class="text-amber-400 mt-0.5 shrink-0"></i>
+              <div>
+                <p class="text-xs font-medium text-white">Gemini 1.5 Flash</p>
+                <p class="text-[10px] text-slate-500">Fast responses, lightweight tasks</p>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <h1 id="chat-title" class="text-sm font-medium text-slate-400 truncate hidden sm:block">New Conversation</h1>
+      </div>
+
+      <!-- API Status Indicators -->
+      <div class="flex items-center gap-3 shrink-0">
+        <div class="hidden sm:flex items-center gap-1.5 bg-white/[0.03] border border-white/[0.06] rounded-full px-2.5 py-1">
+          <span id="gemini-status-dot" class="status-dot status-offline"></span>
+          <span class="text-[10px] text-slate-400">Gemini</span>
+        </div>
+        <div class="hidden sm:flex items-center gap-1.5 bg-white/[0.03] border border-white/[0.06] rounded-full px-2.5 py-1">
+          <span id="supabase-status-dot" class="status-dot status-warn"></span>
+          <span class="text-[10px] text-slate-400">Supabase</span>
+        </div>
+        <button id="toggle-sandbox-btn" class="flex items-center gap-1.5 bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.07] rounded-lg px-2.5 py-1.5 transition-colors">
+          <i data-lucide="layout-panel-left" style="width:14px;height:14px;" class="text-slate-300"></i>
+          <span class="text-xs text-slate-300 hidden lg:inline">Sandbox</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Content area: Chat + Sandbox split -->
+    <div class="flex-1 flex min-h-0 relative">
+
+      <!-- Chat Column -->
+      <section id="chat-column" class="flex-1 flex flex-col min-w-0 relative">
+
+        <!-- Chat Feed -->
+        <div id="chat-feed" class="flex-1 overflow-y-auto px-4 md:px-8 lg:px-16 py-6 space-y-5">
+
+          <!-- Empty state -->
+          <div id="chat-empty-state" class="h-full flex flex-col items-center justify-center text-center gap-4 max-w-lg mx-auto">
+            <div class="w-16 h-16 rounded-2xl btn-gradient flex items-center justify-center glow-violet animate-fade-in">
+              <i data-lucide="sparkles" style="width:30px;height:30px;" class="text-white"></i>
+            </div>
+            <div>
+              <h2 class="text-xl font-semibold text-white mb-1.5">How can I help you today?</h2>
+              <p class="text-sm text-slate-500">Ask a question, paste some code, or upload a file to get started.</p>
+            </div>
+            <div class="flex flex-wrap gap-2 justify-center mt-2">
+              <button class="suggestion-chip tool-chip">
+                <i data-lucide="code-2" style="width:13px;height:13px;"></i> Write a function
+              </button>
+              <button class="suggestion-chip tool-chip">
+                <i data-lucide="image" style="width:13px;height:13px;"></i> Generate image prompt
+              </button>
+              <button class="suggestion-chip tool-chip">
+                <i data-lucide="file-text" style="width:13px;height:13px;"></i> Summarize text
+              </button>
+            </div>
+          </div>
+
+          <!-- Messages injected here by JS -->
+        </div>
+
+        <!-- Typing indicator (shown while streaming) -->
+        <div id="typing-indicator" class="hidden px-4 md:px-8 lg:px-16 pb-2">
+          <div class="msg-ai inline-flex items-center gap-2 rounded-2xl px-4 py-3">
+            <span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>
+          </div>
+        </div>
+
+        <!-- Input Area -->
+        <div class="px-4 md:px-8 lg:px-16 pb-4 pt-1 shrink-0">
+
+          <!-- Quick tool chips -->
+          <div class="flex gap-2 mb-2.5 overflow-x-auto pb-1" id="quick-tools-row">
+            <button class="tool-chip quick-tool-btn" data-prompt="Generate a detailed, vivid image generation prompt based on the following idea: ">
+              <i data-lucide="image-plus" style="width:13px;height:13px;"></i> Generate Image Prompt
+            </button>
+            <button class="tool-chip quick-tool-btn" data-prompt="Please review the following code, fix any bugs, and explain the fix: ">
+              <i data-lucide="wrench" style="width:13px;height:13px;"></i> Fix Code
+            </button>
+            <button class="tool-chip quick-tool-btn" data-prompt="Explain the following concept simply, as if to a beginner: ">
+              <i data-lucide="lightbulb" style="width:13px;height:13px;"></i> Explain Simply
+            </button>
+            <button class="tool-chip quick-tool-btn" data-prompt="Write comprehensive unit tests for the following code: ">
+              <i data-lucide="test-tube-2" style="width:13px;height:13px;"></i> Write Tests
+            </button>
+          </div>
+
+          <!-- Attachment preview row -->
+          <div id="attachment-preview-row" class="hidden flex-wrap gap-2 mb-2"></div>
+
+          <div class="glass-panel rounded-2xl p-2 flex items-end gap-2 focus-within:border-violet-500/40 transition-colors">
+            <button id="attach-file-btn" class="shrink-0 p-2.5 rounded-xl hover:bg-white/[0.06] text-slate-400 hover:text-violet-400 transition-colors" title="Attach file">
+              <i data-lucide="paperclip" style="width:19px;height:19px;"></i>
+            </button>
+            <input type="file" id="file-input" class="hidden" multiple accept="image/*,.pdf,.txt,.md,.csv,.json" />
+
+            <textarea id="chat-input" rows="1"
+              class="flex-1 bg-transparent border-none outline-none text-sm text-slate-100 placeholder-slate-500 py-2.5 px-1 resize-none"
+              placeholder="Message NexusAI..."></textarea>
+
+            <button id="send-btn" disabled class="btn-gradient shrink-0 w-9 h-9 rounded-xl flex items-center justify-center text-white disabled:hover:transform-none">
+              <i data-lucide="arrow-up" style="width:18px;height:18px;"></i>
+            </button>
+          </div>
+          <p class="text-[10px] text-slate-600 text-center mt-2">NexusAI can make mistakes. Verify important information.</p>
+        </div>
+      </section>
+
+      <!-- Live Sandbox Panel -->
+      <section id="sandbox-panel" class="hidden md:flex w-0 shrink-0 border-l border-white/5 flex-col overflow-hidden transition-all duration-300">
+        <div class="glass-panel flex items-center justify-between px-3.5 py-2.5 border-b border-white/5 shrink-0">
+          <div class="flex items-center gap-2">
+            <i data-lucide="square-terminal" style="width:14px;height:14px;" class="text-violet-400"></i>
+            <span class="text-xs font-medium text-slate-300">Live Sandbox</span>
+          </div>
+          <div class="flex items-center gap-1">
+            <button id="sandbox-refresh-btn" class="p-1.5 rounded-lg hover:bg-white/[0.06] text-slate-400 hover:text-white transition-colors" title="Refresh">
+              <i data-lucide="refresh-cw" style="width:14px;height:14px;"></i>
+            </button>
+            <button id="sandbox-newtab-btn" class="p-1.5 rounded-lg hover:bg-white/[0.06] text-slate-400 hover:text-white transition-colors" title="Open in new tab">
+              <i data-lucide="external-link" style="width:14px;height:14px;"></i>
+            </button>
+            <button id="sandbox-close-btn" class="p-1.5 rounded-lg hover:bg-white/[0.06] text-slate-400 hover:text-white transition-colors" title="Close">
+              <i data-lucide="x" style="width:14px;height:14px;"></i>
+            </button>
+          </div>
+        </div>
+        <div class="flex-1 relative bg-white">
+          <div id="sandbox-placeholder" class="absolute inset-0 flex flex-col items-center justify-center text-center gap-2 bg-slate-950 text-slate-500 p-6">
+            <i data-lucide="code" style="width:32px;height:32px;" class="opacity-30"></i>
+            <p class="text-xs opacity-60 max-w-[220px]">Generated HTML/CSS/JS code blocks will render live here automatically.</p>
+          </div>
+          <iframe id="sandbox-iframe" sandbox="allow-scripts allow-modals allow-forms allow-popups" class="hidden"></iframe>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<!-- Toast container -->
+<div id="toast-container" class="fixed bottom-5 right-5 z-[100] flex flex-col gap-2 items-end"></div>
+
+<!-- PART 1 ENDS HERE - DO NOT EDIT PREVIOUS CODE -->
+<!-- [CONTINUATION INSTRUCTION FOR PART 2]: Paste Part 2 directly below this line without modifying the preceding code. Part 2 will contain the Settings Modal, Image Lightbox Modal, and the opening of the <script> block with Supabase/Gemini initialization logic. -->
