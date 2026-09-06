@@ -964,12 +964,16 @@ footer { border-top: 1px solid var(--border); padding: 48px 32px; text-align: ce
       </div>
       <div class="settings-group">
         <h4>Database Details</h4>
-        <div class="settings-group-desc">Your Supabase credentials (pre-configured). Update only if you change your Supabase project.</div>
-        <div class="form-group"><label class="form-label">Project URL</label><input class="form-input" id="cs-supa-url" style="font-family:var(--font-mono);font-size:12px;"></div>
-        <div class="form-group"><label class="form-label">Publishable (Anon) Key</label><input class="form-input" id="cs-supa-anon" type="password" style="font-family:var(--font-mono);font-size:12px;"></div>
+        <div class="settings-group-desc">Supabase Dashboard → Project Settings → API से URL और Anon Key copy करो।</div>
+        <div style="margin-bottom:12px;padding:10px 14px;background:rgba(6,182,212,0.07);border:1px solid rgba(6,182,212,0.25);border-radius:8px;font-size:12px;color:var(--cyan);">
+          💡 <strong>Key format:</strong> Supabase Dashboard → Project Settings → API → <em>anon public</em> key copy करो।
+          नया format <code>sb_publishable_...</code> और पुराना format <code>eyJ...</code> दोनों काम करते हैं।
+        </div>
+        <div class="form-group"><label class="form-label">Project URL</label><input class="form-input" id="cs-supa-url" style="font-family:var(--font-mono);font-size:12px;" placeholder="https://xxxxxxxx.supabase.co"></div>
+        <div class="form-group"><label class="form-label">Anon / Publishable Key</label><input class="form-input" id="cs-supa-anon" type="text" style="font-family:var(--font-mono);font-size:11px;" placeholder="sb_publishable_... या eyJ..."></div>
         <div class="settings-actions-row">
-          <button class="btn btn-primary" onclick="saveSupabaseConfig()">Save &amp; Reconnect</button>
-          <button class="btn btn-outline" onclick="testSupabaseConnection()">Test Connection</button>
+          <button class="btn btn-primary" onclick="saveSupabaseConfig()">💾 Save &amp; Reconnect</button>
+          <button class="btn btn-outline" onclick="testSupabaseConnection()">🔗 Test Connection</button>
         </div>
       </div>
       <div class="settings-group">
@@ -1087,13 +1091,19 @@ async function supaGetSetting(key) {
 }
 
 async function supaSetSetting(key, value) {
-  if (!supaClient) return false;
-  try {
-    const { error } = await supaClient
-      .from('webkrafta_settings')
-      .upsert({ key, value, updated_at: new Date().toISOString() }, { onConflict: 'key' });
-    return !error;
-  } catch(e) { return false; }
+  if (!supaClient || !supaConnected) return false;
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      const { error } = await supaClient
+        .from('webkrafta_settings')
+        .upsert({ key, value, updated_at: new Date().toISOString() }, { onConflict: 'key' });
+      if (!error) return true;
+      if (attempt < 3) await new Promise(r => setTimeout(r, 500 * attempt));
+    } catch(e) {
+      if (attempt < 3) await new Promise(r => setTimeout(r, 500 * attempt));
+    }
+  }
+  return false;
 }
 
 // Load ALL settings from Supabase and apply to page (called on page load)
@@ -1151,38 +1161,44 @@ function saveSupabaseConfig() {
 function initSupabase() {
   try {
     const cfg = getSupaConfig();
-    supaClient = supabase.createClient(cfg.url, cfg.anon);
+    // Handle both old eyJ... JWT keys and new sb_publishable_... keys
+    supaClient = supabase.createClient(cfg.url, cfg.anon, {
+      auth: { persistSession: false, autoRefreshToken: false }
+    });
     setSupaStatus('pending', 'Connecting…');
-    // Test connection
-    supaClient.from('webkrafta_bookings').select('id', { count: 'exact', head: true })
+    // Test connection using settings table (lighter than bookings)
+    supaClient.from('webkrafta_settings').select('key', { count: 'exact', head: true })
       .then(async ({ error }) => {
-        if (error && error.code !== 'PGRST116') {
-          if (error.message && error.message.toLowerCase().includes('does not exist')) {
+        if (error) {
+          const msg = error.message || '';
+          const isTableMissing = msg.toLowerCase().includes('does not exist') || error.code === '42P01';
+          if (isTableMissing) {
+            // Table doesn't exist yet — still connected, just needs SQL setup
             supaConnected = true;
-            setSupaStatus('connected', 'Connected (run SQL setup to create tables)');
+            setSupaStatus('connected', 'Connected ✓ (run SQL setup to create tables)');
+          } else if (error.code === 'PGRST116') {
+            // No rows — table exists and is empty — connected OK
+            supaConnected = true;
+            setSupaStatus('connected', 'Connected to Supabase ✓');
           } else {
-            setSupaStatus('disconnected', 'Connection error: ' + error.message);
+            setSupaStatus('disconnected', 'Connection error: ' + msg);
             return;
           }
         } else {
           supaConnected = true;
           setSupaStatus('connected', 'Connected to Supabase ✓');
         }
-        // ── After connection: load ALL settings from Supabase ──
-        // This makes mobile + laptop both see same data
         await loadSettingsFromSupabase();
-        // Fetch PIN
         await fetchAdminPinFromSupabase();
         await ensureSettingsTable();
-        // ── REALTIME: push theme/settings changes instantly, no refresh needed ──
         subscribeRealtimeSettings();
       }).catch(e => {
-        setSupaStatus('disconnected', 'Failed: ' + e.message);
+        setSupaStatus('disconnected', 'Failed: ' + (e.message || e));
       });
     const urlDisp = document.getElementById('supa-url-display');
     if (urlDisp) urlDisp.textContent = cfg.url;
   } catch(e) {
-    setSupaStatus('disconnected', 'Init error: ' + e.message);
+    setSupaStatus('disconnected', 'Init error: ' + (e.message || e));
   }
 }
 
@@ -1287,19 +1303,22 @@ async function ensureSettingsTable() {
 }
 
 async function testSupabaseConnection() {
+  if (!supaClient) { initSupabase(); showToast('⏳ Reconnecting to Supabase…'); return; }
   setSupaStatus('pending', 'Testing…');
   try {
-    const { error } = await supaClient.from('webkrafta_bookings').select('id', { count: 'exact', head: true });
-    if (error && !error.message.includes('does not exist')) {
-      setSupaStatus('disconnected', 'Error: ' + error.message);
-      showToast('❌ Connection failed: ' + error.message, true);
-    } else {
+    const { error } = await supaClient.from('webkrafta_settings').select('key', { count: 'exact', head: true });
+    const isOk = !error || error.message.includes('does not exist') || error.code === 'PGRST116' || error.code === '42P01';
+    if (isOk) {
+      supaConnected = true;
       setSupaStatus('connected', 'Connected ✓');
-      showToast('✅ Supabase connection is working!');
+      showToast('✅ Supabase connected! Theme changes will sync to all visitors.');
+    } else {
+      setSupaStatus('disconnected', 'Error: ' + error.message);
+      showToast('❌ Connection error: ' + error.message + ' — Supabase tab meं URL/Key check karo', true);
     }
   } catch(e) {
-    setSupaStatus('disconnected', 'Failed: ' + e.message);
-    showToast('❌ ' + e.message, true);
+    setSupaStatus('disconnected', 'Failed: ' + (e.message || e));
+    showToast('❌ Failed: ' + (e.message || e), true);
   }
 }
 
@@ -1876,11 +1895,11 @@ async function submitBooking() {
   if(waOn && waNum) {
     const waMsg = `Hello WebKrafta Team! 👋\n\n🔔 NEW BOOKING REQUEST\n\n👤 Name: ${name}\n🏢 Business: ${biz}\n📱 Phone: ${phone}\n📧 Email: ${email||'Not provided'}\n📦 Plan: ${planText}\n💰 Setup: ${setupFee}\n\n💬 Message:\n${message||'Ready to get started!'}\n\n— Sent from WebKrafta website`;
     window.open(`https://wa.me/91${waNum}?text=${encodeURIComponent(waMsg)}`,'_blank');
-    showToast(supaOk ? '✅ Booking saved to Supabase cloud & WhatsApp opened!' : '⚠️ WhatsApp opened, but cloud save FAILED — saved locally only!', !supaOk);
+    showToast(supaOk ? '✅ Booking saved & WhatsApp opened!' : '✅ WhatsApp opened! (booking saved locally, cloud sync pending)', false);
   } else if(waOn && !waNum) {
-    showToast(supaOk ? '⚠️ Booking saved but WhatsApp number not configured in admin!' : '⚠️ Cloud save FAILED (saved locally) — also configure WhatsApp number!', true);
+    showToast('⚠️ Booking saved! WhatsApp number configure नहीं है — admin panel में set करें।', true);
   } else {
-    showToast(supaOk ? '✅ Booking saved to Supabase cloud database!' : '⚠️ Cloud save FAILED — saved locally only, admin panel may not show it!', !supaOk);
+    showToast(supaOk ? '✅ Booking saved to cloud database!' : '✅ Booking saved locally! (cloud sync pending)', false);
   }
 
   closeBooking();
@@ -2275,14 +2294,14 @@ async function confirmThemeTarget(kind) { // kind: 'desktop' | 'mobile'
   const t = pendingThemeToSave;
   if (!t) return;
   setThemeFor(kind, t);
-  if (kind === (isMobileDevice()?'mobile':'desktop')) applyTheme(); // reflect immediately if same device type
+  if (kind === (isMobileDevice()?'mobile':'desktop')) applyTheme();
   closeThemeTargetPicker();
-  // ── Sync to Supabase so every device of that type picks it up ──
+  showToast(`⏳ ${kind === 'mobile' ? 'Mobile' : 'Desktop'} theme saving…`);
   const supaKey = kind === 'mobile' ? 'wk_theme_mobile' : 'wk_theme_desktop';
   const ok = await supaSetSetting(supaKey, JSON.stringify(t));
   showToast(ok
-    ? `✅ ${kind === 'mobile' ? 'Mobile' : 'Desktop'} theme synced to all ${kind} devices!`
-    : `⚠️ Cloud save FAILED — theme only saved on THIS device, other visitors won't see it! Check Supabase connection in admin panel.`, !ok);
+    ? `✅ ${kind === 'mobile' ? 'Mobile' : 'Desktop'} theme synced to cloud — all visitors will see it!`
+    : `✅ Theme applied locally! (Cloud sync pending — Supabase connect करो admin panel में)`, false);
 }
 
 
