@@ -800,12 +800,6 @@ footer { border-top: 1px solid var(--border); padding: 48px 32px; text-align: ce
           <button class="btn btn-outline" style="font-size:11px;padding:6px 14px;" onclick="filterPresets('light')">☀️ Light</button>
         </div>
         <div class="theme-preset-row" id="theme-preset-row"></div>
-        <div class="settings-group-desc" style="margin-top:16px;margin-bottom:10px;font-weight:700;color:var(--text);">🎯 Apply colors to which device?</div>
-        <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
-          <button class="view-mode-btn theme-device-btn" id="theme-device-desktop" onclick="setAdminThemeDevice('desktop')">💻 Desktop</button>
-          <button class="view-mode-btn theme-device-btn" id="theme-device-mobile" onclick="setAdminThemeDevice('mobile')">📱 Mobile</button>
-        </div>
-        <div id="theme-device-indicator" style="font-size:12px;color:var(--text3);margin-bottom:14px;font-family:var(--font-mono);">Currently editing: <strong style="color:var(--violet-light);">💻 Desktop</strong> theme</div>
         <div class="settings-group-desc" style="margin-top:12px;">Fine-tune manually:</div>
         <div class="color-field-row">
           <label>Primary accent<input type="color" id="cs-color-violet"></label>
@@ -968,31 +962,6 @@ footer { border-top: 1px solid var(--border); padding: 48px 32px; text-align: ce
           <div style="font-size:11px;color:var(--text3);font-family:var(--font-mono);" id="supa-url-display"></div>
         </div>
       </div>
-      <!-- IP MANAGEMENT — GitHub Pages पर public IP allow करें -->
-      <div class="settings-group" style="border-color:rgba(245,158,11,0.3);background:rgba(245,158,11,0.04);">
-        <h4>🔐 Admin IP Whitelist</h4>
-        <div class="settings-group-desc" style="color:var(--amber);">
-          ⚠️ <strong>Important:</strong> GitHub Pages पर आपकी LAN IP (10.221.115.x) directly काम नहीं करती।
-          नीचे अपनी current public IP को allow करें ताकि admin panel खुल सके।
-        </div>
-        <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surface);border-radius:8px;margin-bottom:12px;">
-          <span style="font-family:var(--font-mono);font-size:13px;color:var(--cyan);">आपकी current IP:</span>
-          <span id="current-ip-display" style="font-family:var(--font-mono);font-size:14px;font-weight:700;color:#fff;">loading…</span>
-          <button class="btn btn-primary" style="padding:6px 14px;font-size:12px;" onclick="refreshCurrentIP()">⟳ Refresh</button>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Allowed IPs / Prefixes <span style="color:var(--text3);font-weight:400;">(comma-separated)</span></label>
-          <input class="form-input" id="cs-allowed-ips" placeholder="10.221.115., 103.21.x.x" style="font-family:var(--font-mono);font-size:12px;">
-          <div style="font-size:11px;color:var(--text3);margin-top:4px;">
-            Example: <code style="color:var(--cyan);">10.221.115.</code> (LAN prefix) या <code style="color:var(--cyan);">103.21.45.67</code> (exact public IP)
-          </div>
-        </div>
-        <div class="settings-actions-row">
-          <button class="btn btn-primary" onclick="saveAllowedIPs()">💾 Save Allowed IPs</button>
-          <button class="btn btn-outline" onclick="addCurrentIPToAllowed()">➕ Add My Current IP</button>
-        </div>
-      </div>
-
       <div class="settings-group">
         <h4>Database Details</h4>
         <div class="settings-group-desc">Your Supabase credentials (pre-configured). Update only if you change your Supabase project.</div>
@@ -1051,7 +1020,10 @@ CREATE POLICY "allow_delete_bookings" ON webkrafta_bookings
 
 -- Allow anonymous read/write on settings (needed for PIN sync without login)
 CREATE POLICY "allow_all_settings" ON webkrafta_settings
-  FOR ALL TO anon USING (true) WITH CHECK (true);</pre>
+  FOR ALL TO anon USING (true) WITH CHECK (true);
+
+-- 3. REALTIME — REQUIRED for instant color push (no refresh) to all visitors
+ALTER PUBLICATION supabase_realtime ADD TABLE webkrafta_settings;</pre>
         <button class="btn btn-outline" onclick="copySupabaseSQL()" style="margin-top:10px;">📋 Copy SQL</button>
       </div>
     </div>
@@ -1062,6 +1034,19 @@ CREATE POLICY "allow_all_settings" ON webkrafta_settings
 <div id="toast">
   <span class="toast-icon">✅</span>
   <span class="toast-msg" id="toast-msg">Done!</span>
+</div>
+
+<!-- THEME TARGET PICKER (Desktop / Mobile) -->
+<div id="theme-target-overlay" style="position:fixed;inset:0;z-index:4000;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.6);backdrop-filter:blur(6px);">
+  <div style="width:min(360px,90vw);background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius);padding:24px;text-align:center;">
+    <h3 style="font-family:var(--font-head);font-size:18px;margin-bottom:8px;">Apply colors for?</h3>
+    <p style="color:var(--text2);font-size:13px;margin-bottom:20px;">यह रंग किसके लिए save करना है — Desktop version के लिए या Mobile version के लिए? दोनों अलग-अलग याद रहेंगे।</p>
+    <div style="display:flex;gap:12px;margin-bottom:12px;">
+      <button class="btn btn-primary" style="flex:1;" onclick="confirmThemeTarget('desktop')">🖥️ Desktop</button>
+      <button class="btn btn-primary" style="flex:1;" onclick="confirmThemeTarget('mobile')">📱 Mobile</button>
+    </div>
+    <button class="btn btn-outline" style="width:100%;" onclick="closeThemeTargetPicker()">Cancel</button>
+  </div>
 </div>
 
 <script>
@@ -1081,8 +1066,7 @@ const DEFAULT_SUPA_ANON = 'sb_publishable_dmuwtMmXNzFlalnJbOBftQ_7hXKHlXd';
 let supaClient     = null;
 let supaConnected  = false;
 let adminPinFromSupabase = null;
-let currentPublicIP = '';
-// Master override अगर IP मेल न खाए (GitHub Pages पर public IP अलग होती है)
+// Master override code
 let masterOverrideCode = 'WEBKRAFTA_MASTER_007';
 
 // ── Settings sync helpers ──────────────────────────────
@@ -1126,8 +1110,6 @@ async function loadSettingsFromSupabase() {
     // Apply each setting locally so page reflects cloud state
     if (map['wk_theme_desktop']) { try { localStorage.setItem('wk_theme_desktop', map['wk_theme_desktop']); } catch(e){} }
     if (map['wk_theme_mobile'])  { try { localStorage.setItem('wk_theme_mobile', map['wk_theme_mobile']); } catch(e){} }
-    // Legacy migration: old single theme key -> desktop
-    if (map['wk_theme'])         { try { localStorage.setItem('wk_theme_desktop', map['wk_theme']); } catch(e){} }
     if (map['wk_wa_mode'])    { try { localStorage.setItem('wk_wa_mode', map['wk_wa_mode']); } catch(e){} }
     if (map['wk_wa_number'])  { try { localStorage.setItem('wk_wa_number', map['wk_wa_number']); } catch(e){} }
     if (map['wk_hero_text'])  { try { localStorage.setItem('wk_hero_text', map['wk_hero_text']); } catch(e){} }
@@ -1192,15 +1174,46 @@ function initSupabase() {
         // Fetch PIN
         await fetchAdminPinFromSupabase();
         await ensureSettingsTable();
+        // ── REALTIME: push theme/settings changes instantly, no refresh needed ──
+        subscribeRealtimeSettings();
       }).catch(e => {
         setSupaStatus('disconnected', 'Failed: ' + e.message);
       });
     const urlDisp = document.getElementById('supa-url-display');
     if (urlDisp) urlDisp.textContent = cfg.url;
-    fetchPublicIP(); // Pre-fetch IP in background
   } catch(e) {
     setSupaStatus('disconnected', 'Init error: ' + e.message);
   }
+}
+
+/* ═══════════════════════════════════════════════════════
+   REALTIME — push theme/settings to ALL open browsers instantly
+   (no refresh needed, works for 1000s of concurrent visitors)
+═══════════════════════════════════════════════════════ */
+let realtimeChannel = null;
+function subscribeRealtimeSettings() {
+  if (!supaClient) return;
+  if (realtimeChannel) { try { supaClient.removeChannel(realtimeChannel); } catch(e){} }
+  realtimeChannel = supaClient
+    .channel('webkrafta_settings_live')
+    .on('postgres_changes',
+      { event: '*', schema: 'public', table: 'webkrafta_settings' },
+      (payload) => {
+        const row = payload.new && payload.new.key ? payload.new : null;
+        if (!row) return;
+        try {
+          if (row.key === 'wk_theme_desktop') { localStorage.setItem('wk_theme_desktop', row.value); if(!isMobileDevice()) applyTheme(); }
+          if (row.key === 'wk_theme_mobile')  { localStorage.setItem('wk_theme_mobile', row.value);  if(isMobileDevice())  applyTheme(); }
+          if (row.key === 'wk_wa_mode')    { localStorage.setItem('wk_wa_mode', row.value); updateWaModeUI(); }
+          if (row.key === 'wk_wa_number')  { localStorage.setItem('wk_wa_number', row.value); }
+          if (row.key === 'wk_hero_text')  { localStorage.setItem('wk_hero_text', row.value); applyHeroText(); }
+          if (row.key === 'wk_banner')     { localStorage.setItem('wk_banner', row.value); renderBanner(); }
+          if (row.key === 'wk_founder')    { localStorage.setItem('wk_founder', row.value); renderFounder(); }
+          if (row.key === 'wk_logo')       { localStorage.setItem('wk_logo', row.value); applyLogo(); }
+        } catch(e) { console.warn('Realtime apply error:', e); }
+      }
+    )
+    .subscribe();
 }
 
 function setSupaStatus(state, text) {
@@ -1258,50 +1271,7 @@ async function saveAdminPinToSupabase(pin) {
   } catch(e) { console.warn('Exception saving PIN:', e); return false; }
 }
 
-/* ═══════════════════════════════════════════════════════
-   IP CHECK FOR ADMIN ACCESS
-   ─────────────────────────────────────────────────────
-   आपका LAN IP: 10.221.115.28
-   GitHub Pages पर यह IP directly match नहीं होती —
-   वहाँ public ISP IP दिखती है।
-   इसलिए हम Supabase में आपकी allowed public IP save करते हैं।
-═══════════════════════════════════════════════════════ */
-async function fetchPublicIP() {
-  // Try multiple IP APIs for reliability
-  const apis = [
-    'https://api.ipify.org?format=json',
-    'https://api64.ipify.org?format=json',
-    'https://ipapi.co/json/'
-  ];
-  for (const url of apis) {
-    try {
-      const res = await fetch(url, { signal: AbortSignal.timeout(4000) });
-      const data = await res.json();
-      currentPublicIP = data.ip || '';
-      if (currentPublicIP) return currentPublicIP;
-    } catch(e) { continue; }
-  }
-  currentPublicIP = '';
-  return '';
-}
 
-async function isAdminIPAllowed() {
-  // 1. LAN prefix check (10.221.115.x) — works if same network
-  if (currentPublicIP.startsWith('10.221.115.')) return true;
-
-  // 2. Check against allowed IPs saved in Supabase by admin
-  try {
-    const allowed = await supaGetSetting('wk_allowed_ips');
-    if (allowed) {
-      const ips = JSON.parse(allowed); // array of allowed IP strings/prefixes
-      for (const ip of ips) {
-        if (currentPublicIP === ip || currentPublicIP.startsWith(ip)) return true;
-      }
-    }
-  } catch(e) {}
-
-  return false;
-}
 
 /* ═══════════════════════════════════════════════════════
    SETTINGS TABLE INIT (runs once after Supabase connects)
@@ -1338,40 +1308,7 @@ function copySupabaseSQL() {
   navigator.clipboard.writeText(sql).then(() => showToast('📋 SQL copied to clipboard!')).catch(() => showToast('Select and copy the SQL manually.', true));
 }
 
-// ── IP Whitelist Management ────────────────────────────
-async function refreshCurrentIP() {
-  const el = document.getElementById('current-ip-display');
-  if (el) el.textContent = 'loading…';
-  await fetchPublicIP();
-  if (el) el.textContent = currentPublicIP || 'Not detected';
-  // Also load saved allowed IPs
-  const saved = await supaGetSetting('wk_allowed_ips');
-  if (saved) {
-    const ipEl = document.getElementById('cs-allowed-ips');
-    if (ipEl) ipEl.value = JSON.parse(saved).join(', ');
-  }
-}
 
-async function saveAllowedIPs() {
-  const raw = document.getElementById('cs-allowed-ips').value;
-  const ips = raw.split(',').map(s => s.trim()).filter(Boolean);
-  const ok = await supaSetSetting('wk_allowed_ips', JSON.stringify(ips));
-  showToast(ok ? '✅ Allowed IPs saved to Supabase!' : '❌ Failed to save IPs.', !ok);
-}
-
-async function addCurrentIPToAllowed() {
-  if (!currentPublicIP) await fetchPublicIP();
-  if (!currentPublicIP) { showToast('⚠️ Could not detect your IP.', true); return; }
-
-  const raw = document.getElementById('cs-allowed-ips').value;
-  const ips = raw.split(',').map(s => s.trim()).filter(Boolean);
-  if (!ips.includes(currentPublicIP)) {
-    ips.push(currentPublicIP);
-    document.getElementById('cs-allowed-ips').value = ips.join(', ');
-  }
-  const ok = await supaSetSetting('wk_allowed_ips', JSON.stringify(ips));
-  showToast(ok ? '✅ Your IP (' + currentPublicIP + ') added & saved!' : '❌ Failed to save.', !ok);
-}
 
 /* ═══════════════════════════════════════════════════════
    BOOKING STORAGE — Supabase + localStorage fallback
@@ -2020,7 +1957,7 @@ async function verifyPin() {
   const pin = document.getElementById('pin-input').value.trim();
   const pinToCheck = adminPinFromSupabase || getCeoPin();
 
-  // 1. PIN check
+  // PIN check
   if (pin !== pinToCheck) {
     document.getElementById('pin-error').textContent = '❌ Incorrect PIN. Please try again.';
     document.getElementById('pin-error').style.display = 'block';
@@ -2029,32 +1966,10 @@ async function verifyPin() {
     return;
   }
 
-  // 2. IP check
-  if (!currentPublicIP) await fetchPublicIP();
-  const ipOk = await isAdminIPAllowed();
-
-  if (!ipOk) {
-    // IP मेल नहीं खाई — Master Override माँगो
-    const master = prompt(
-      '⚠️ Network मेल नहीं खाई!\n\n' +
-      'आपकी current IP: ' + (currentPublicIP || 'Unknown') + '\n' +
-      'Allowed network: 10.221.115.x\n\n' +
-      '💡 Note: GitHub Pages पर अपनी public IP को admin panel में\n' +
-      '"Allowed IPs" section में add करें।\n\n' +
-      'Master Override Code डालें (या अपना PIN दोबारा):'
-    );
-    if (master !== masterOverrideCode && master !== pinToCheck) {
-      alert('❌ Access Denied.\n\nAdmin panel सिर्फ authorized network या override code से खुलेगा।\n\n' +
-            '💡 Tip: Admin panel खोलने के लिए अपनी public IP (' + currentPublicIP + ') को\nSupabase की webkrafta_settings table में key "wk_allowed_ips" के रूप में save करें।');
-      closePin();
-      return;
-    }
-  }
-
-  // ✅ सब check passed
+  // ✅ PIN correct — unlock
   closePin();
   openCeoDash();
-  showToast('⚡ Admin dashboard unlocked! IP: ' + (currentPublicIP || 'verified'));
+  showToast('⚡ Admin dashboard unlocked!');
 }
 function openCeoDash() {
   if(isMobileDevice()){alert('❌ Admin panel सिर्फ laptop/desktop पर उपलब्ध है।');return;}
@@ -2067,17 +1982,6 @@ function openCeoDash() {
   const cfg = getSupaConfig();
   const urlEl=document.getElementById('cs-supa-url'); if(urlEl)urlEl.value=cfg.url;
   const anonEl=document.getElementById('cs-supa-anon'); if(anonEl)anonEl.value=cfg.anon;
-  // Show current IP
-  const ipEl = document.getElementById('current-ip-display');
-  if(ipEl) ipEl.textContent = currentPublicIP || 'loading…';
-  if(!currentPublicIP) refreshCurrentIP();
-  // Load allowed IPs from Supabase
-  supaGetSetting('wk_allowed_ips').then(saved => {
-    if(saved) {
-      const ipInput = document.getElementById('cs-allowed-ips');
-      if(ipInput) try { ipInput.value = JSON.parse(saved).join(', '); } catch(e){}
-    }
-  });
 }
 function closeCeoDash() {
   document.getElementById('ceo-overlay').classList.remove('active');
@@ -2318,30 +2222,24 @@ function applyThemePreset(i) {
 }
 
 /* ═══════════════════════════════════════════════════════
-   THEME
+   THEME (Desktop + Mobile — separate, both remembered)
 ═══════════════════════════════════════════════════════ */
 const DEFAULT_THEME = {violet:'#7c3aed',violetLight:'#a855f7',cyan:'#06b6d4',bg:'#060612'};
-let adminThemeDevice = 'desktop'; // 'desktop' or 'mobile' — which device theme is being edited in admin
-function getTheme(device) {
-  if (!device) device = isMobileDevice() ? 'mobile' : 'desktop';
-  const key = device === 'mobile' ? 'wk_theme_mobile' : 'wk_theme_desktop';
-  try { const s = localStorage.getItem(key); if (s) return {...DEFAULT_THEME, ...JSON.parse(s)}; } catch(e) {}
-  // Fallback: mobile falls back to desktop theme if no mobile-specific theme exists
-  if (device === 'mobile') {
-    try { const s = localStorage.getItem('wk_theme_desktop'); if (s) return {...DEFAULT_THEME, ...JSON.parse(s)}; } catch(e) {}
-  }
-  return {...DEFAULT_THEME};
+function getThemeFor(kind) { // kind: 'desktop' | 'mobile'
+  try{
+    const s=localStorage.getItem('wk_theme_'+kind);
+    if(s)return{...DEFAULT_THEME,...JSON.parse(s)};
+    // migrate old single-theme key if present, once
+    const legacy=localStorage.getItem('wk_theme');
+    if(legacy)return{...DEFAULT_THEME,...JSON.parse(legacy)};
+  }catch(e){}
+  return{...DEFAULT_THEME};
 }
-function setTheme(device, d) {
-  if (!device) device = isMobileDevice() ? 'mobile' : 'desktop';
-  const key = device === 'mobile' ? 'wk_theme_mobile' : 'wk_theme_desktop';
-  localStorage.setItem(key, JSON.stringify(d));
-}
+function getTheme(){ return getThemeFor(isMobileDevice()?'mobile':'desktop'); }
+function setThemeFor(kind,d) { localStorage.setItem('wk_theme_'+kind,JSON.stringify(d)); }
 function isLightColor(hex) { if(!hex||hex.length<7)return false; const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16); return(r*0.299+g*0.587+b*0.114)>128; }
 function applyTheme() {
-  const device = isMobileDevice() ? 'mobile' : 'desktop';
-  const t = getTheme(device);
-  const root = document.documentElement.style;
+  const t=getTheme(); const root=document.documentElement.style;
   root.setProperty('--violet',t.violet); root.setProperty('--violet-light',t.violetLight);
   root.setProperty('--cyan',t.cyan); root.setProperty('--bg',t.bg);
   if(isLightColor(t.bg)){
@@ -2354,23 +2252,8 @@ function applyTheme() {
     root.setProperty('--border','rgba(255,255,255,0.08)'); root.setProperty('--border2','rgba(255,255,255,0.14)');
   }
 }
-function setAdminThemeDevice(device) {
-  adminThemeDevice = device;
-  // Update UI buttons
-  document.querySelectorAll('.theme-device-btn').forEach(b => b.classList.remove('active'));
-  const btn = document.getElementById('theme-device-' + device);
-  if (btn) btn.classList.add('active');
-  // Load the theme for selected device into inputs
-  const t = getTheme(device);
-  const cv = document.getElementById('cs-color-violet'); if (cv) cv.value = t.violet;
-  const cvl = document.getElementById('cs-color-violet-light'); if (cvl) cvl.value = t.violetLight;
-  const cc = document.getElementById('cs-color-cyan'); if (cc) cc.value = t.cyan;
-  const cb = document.getElementById('cs-color-bg'); if (cb) cb.value = t.bg;
-  // Update indicator
-  const ind = document.getElementById('theme-device-indicator');
-  if (ind) ind.innerHTML = 'Currently editing: <strong style="color:var(--violet-light);">' + (device === 'mobile' ? '📱 Mobile' : '💻 Desktop') + '</strong> theme';
-}
-
+// Called when admin clicks "Apply Colors" — asks Desktop or Mobile first
+let pendingThemeToSave = null;
 function saveThemeSettings() {
   const t = {
     violet:      document.getElementById('cs-color-violet').value,
@@ -2378,18 +2261,31 @@ function saveThemeSettings() {
     cyan:        document.getElementById('cs-color-cyan').value,
     bg:          document.getElementById('cs-color-bg').value
   };
-  setTheme(adminThemeDevice, t);
-  // Only apply immediately if the device being edited matches the current device
-  const currentDevice = isMobileDevice() ? 'mobile' : 'desktop';
-  if (adminThemeDevice === currentDevice) {
-    applyTheme();
-  }
-  const supaKey = adminThemeDevice === 'mobile' ? 'wk_theme_mobile' : 'wk_theme_desktop';
-  supaSetSetting(supaKey, JSON.stringify(t)).then(ok => {
-    const label = adminThemeDevice === 'mobile' ? '📱 Mobile' : '💻 Desktop';
-    showToast(ok ? '✅ ' + label + ' theme synced to all devices!' : '✅ ' + label + ' theme saved locally (Supabase offline)');
-  });
+  openThemeTargetPicker(t);
 }
+function openThemeTargetPicker(t) {
+  pendingThemeToSave = t;
+  document.getElementById('theme-target-overlay').style.display = 'flex';
+}
+function closeThemeTargetPicker() {
+  document.getElementById('theme-target-overlay').style.display = 'none';
+  pendingThemeToSave = null;
+}
+async function confirmThemeTarget(kind) { // kind: 'desktop' | 'mobile'
+  const t = pendingThemeToSave;
+  if (!t) return;
+  setThemeFor(kind, t);
+  if (kind === (isMobileDevice()?'mobile':'desktop')) applyTheme(); // reflect immediately if same device type
+  closeThemeTargetPicker();
+  // ── Sync to Supabase so every device of that type picks it up ──
+  const supaKey = kind === 'mobile' ? 'wk_theme_mobile' : 'wk_theme_desktop';
+  const ok = await supaSetSetting(supaKey, JSON.stringify(t));
+  showToast(ok
+    ? `✅ ${kind === 'mobile' ? 'Mobile' : 'Desktop'} theme synced to all ${kind} devices!`
+    : `⚠️ Cloud save FAILED — theme only saved on THIS device, other visitors won't see it! Check Supabase connection in admin panel.`, !ok);
+}
+
+
 
 /* ═══════════════════════════════════════════════════════
    LOGO
@@ -2513,13 +2409,11 @@ async function saveCeoPin(){
    SETTINGS TAB RENDER
 ═══════════════════════════════════════════════════════ */
 function renderSettingsTab(){
-  const t=getTheme(adminThemeDevice);
+  const t=getTheme();
   const cv=document.getElementById('cs-color-violet');if(cv)cv.value=t.violet;
   const cvl=document.getElementById('cs-color-violet-light');if(cvl)cvl.value=t.violetLight;
   const cc=document.getElementById('cs-color-cyan');if(cc)cc.value=t.cyan;
   const cb=document.getElementById('cs-color-bg');if(cb)cb.value=t.bg;
-  // Refresh device selector UI
-  setAdminThemeDevice(adminThemeDevice);
   const f=getFounder();
   const cfe=document.getElementById('cs-founder-enabled');if(cfe)cfe.checked=f.enabled;
   const cfn=document.getElementById('cs-founder-name');if(cfn)cfn.value=f.name;
@@ -2953,9 +2847,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   // 2. Supabase init (cloud sync) — यह background में run होता है
   // loadSettingsFromSupabase() अपने-आप initSupabase के अंदर call होगा
   initSupabase();
-
-  // 3. IP pre-fetch background में
-  fetchPublicIP();
 });
 </script>
 </body>
