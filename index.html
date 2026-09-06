@@ -974,6 +974,7 @@ footer { border-top: 1px solid var(--border); padding: 48px 32px; text-align: ce
         <div class="settings-actions-row">
           <button class="btn btn-primary" onclick="saveSupabaseConfig()">💾 Save &amp; Reconnect</button>
           <button class="btn btn-outline" onclick="testSupabaseConnection()">🔗 Test Connection</button>
+          <button class="btn btn-outline" onclick="resetSupabaseConfig()" style="font-size:11px;padding:8px 14px;">↺ Reset to Default</button>
         </div>
       </div>
       <div class="settings-group">
@@ -1062,8 +1063,8 @@ ALTER PUBLICATION supabase_realtime ADD TABLE webkrafta_settings;</pre>
 // ════════════════════════════════════════════════════════
 // ⚙️ SUPABASE CONFIG — आपके दोनों projects में से PRIMARY:
 // ════════════════════════════════════════════════════════
-const DEFAULT_SUPA_URL  = 'https://hsrpfrhzkrlugvpngjsl.supabase.co';
-const DEFAULT_SUPA_ANON = 'sb_publishable_dmuwtMmXNzFlalnJbOBftQ_7hXKHlXd';
+const DEFAULT_SUPA_URL  = 'https://xjuvlvyoggzfjhudatok.supabase.co';
+const DEFAULT_SUPA_ANON = 'sb_publishable_gDB2jvusn3K9QjObBGnxjQ_RSVeZlKg';
 // ⬆ Replace 'YOUR_SUPABASE_ANON_KEY_HERE' with your real anon key from:
 // Supabase Dashboard → Project Settings → API → anon public
 
@@ -1144,7 +1145,16 @@ async function loadSettingsFromSupabase() {
 function getSupaConfig() {
   try {
     const s = localStorage.getItem('wk_supa_config');
-    if (s) return JSON.parse(s);
+    if (s) {
+      const parsed = JSON.parse(s);
+      // अगर पुराना project URL cached है तो नया use करो
+      if (parsed.url && parsed.url !== DEFAULT_SUPA_URL) {
+        // पुरानी cached config को clear करके नई use करो
+        localStorage.removeItem('wk_supa_config');
+        return { url: DEFAULT_SUPA_URL, anon: DEFAULT_SUPA_ANON };
+      }
+      return parsed;
+    }
   } catch(e) {}
   return { url: DEFAULT_SUPA_URL, anon: DEFAULT_SUPA_ANON };
 }
@@ -1320,6 +1330,16 @@ async function testSupabaseConnection() {
     setSupaStatus('disconnected', 'Failed: ' + (e.message || e));
     showToast('❌ Failed: ' + (e.message || e), true);
   }
+}
+
+function resetSupabaseConfig() {
+  localStorage.removeItem('wk_supa_config');
+  const urlEl = document.getElementById('cs-supa-url');
+  const anonEl = document.getElementById('cs-supa-anon');
+  if (urlEl) urlEl.value = DEFAULT_SUPA_URL;
+  if (anonEl) anonEl.value = DEFAULT_SUPA_ANON;
+  initSupabase();
+  showToast('↺ Default Supabase config restored & reconnecting…');
 }
 
 function copySupabaseSQL() {
