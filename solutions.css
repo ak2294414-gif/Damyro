@@ -1,0 +1,150 @@
+/* ============================================================
+   NorthWeb Co. — Solution Pages Stylesheet
+   File: css/solutions.css
+   ============================================================ */
+
+/* ── HERO ── */
+.sol-hero {
+  background: var(--bg-dark);
+  padding: 4rem 6% 3.5rem;
+  border-bottom: 3px solid var(--sol-accent, var(--blue));
+  position: relative;
+  overflow: hidden;
+}
+.sol-hero::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 70% 50%, rgba(255,255,255,.04) 0%, transparent 70%);
+}
+.sol-hero-inner { position: relative; max-width: 680px; }
+.sol-hero-icon { font-size: 3rem; margin-bottom: .8rem; display: block; }
+.sol-hero h1 {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: clamp(1.9rem, 3.5vw, 2.8rem);
+  font-weight: 800; line-height: 1.12;
+  letter-spacing: -.5px; color: var(--white); margin-bottom: .9rem;
+}
+.sol-tagline { color: rgba(255,255,255,.7); font-size: 1rem; line-height: 1.7; margin-bottom: 2rem; }
+.sol-hero-btns { display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; }
+.sol-demo-btn { border-color: rgba(255,255,255,.3); color: rgba(255,255,255,.85); }
+.sol-demo-btn:hover { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.6); }
+.sol-demo-soon {
+  font-size: .83rem; color: rgba(255,255,255,.4);
+  border: 1px dashed rgba(255,255,255,.2);
+  padding: .6rem 1.2rem; border-radius: 9px;
+}
+
+/* ── SECTIONS ── */
+.sol-section { padding: 4rem 6%; }
+.sol-section:nth-child(even) { background: var(--white); }
+.sol-section-inner { max-width: 1100px; margin: 0 auto; }
+.sol-section h2 { margin-bottom: 1.5rem; }
+
+/* ── FOR WHOM ── */
+.sol-for-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: .75rem;
+}
+.sol-for-item {
+  display: flex; align-items: center; gap: .65rem;
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 9px; padding: .75rem 1rem;
+  font-size: .88rem; font-weight: 500; color: var(--text);
+}
+.sol-for-icon { color: var(--blue); font-weight: 700; flex-shrink: 0; font-size: 1rem; }
+
+/* ── FEATURES ── */
+.sol-features-section { background: var(--white); }
+.sol-features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: .8rem;
+}
+.sol-feature-item {
+  display: flex; align-items: flex-start; gap: .65rem;
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 10px; padding: .85rem 1rem;
+  font-size: .87rem; color: var(--text-mid); line-height: 1.55;
+}
+.sf-check { color: var(--blue); font-weight: 700; flex-shrink: 0; margin-top: .05rem; }
+
+/* ── PRICING CARD ── */
+.sol-pricing-section { background: var(--bg-dark); }
+.sol-pricing-section .section-eyebrow { color: rgba(255,255,255,.5); }
+.sol-pricing-section h2 { color: var(--white); }
+.sol-price-card {
+  display: grid; grid-template-columns: 1fr 1.3fr; gap: 2.5rem;
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 18px; padding: 2.5rem; align-items: start;
+}
+.spc-price-row {
+  display: flex; justify-content: space-between; align-items: baseline;
+  padding: .85rem 0; border-bottom: 1px solid rgba(255,255,255,.1);
+}
+.spc-price-row:last-of-type { border: none; }
+.spc-label { color: rgba(255,255,255,.55); font-size: .88rem; }
+.spc-amount { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.4rem; font-weight: 800; color: var(--white); }
+.spc-monthly { font-size: 1.1rem; color: rgba(255,255,255,.75); }
+.spc-note { color: rgba(255,255,255,.45); font-size: .8rem; line-height: 1.65; margin-top: .9rem; }
+
+.spc-right { background: var(--white); border-radius: 14px; padding: 1.8rem; }
+.spc-right h3 { font-family: 'Plus Jakarta Sans', sans-serif; font-size: .95rem; font-weight: 700; margin-bottom: 1.1rem; }
+.spc-list { list-style: none; margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: .5rem; }
+.spc-list li { display: flex; align-items: flex-start; gap: .6rem; font-size: .87rem; color: var(--text-mid); }
+.spc-list li span:first-child { color: var(--blue); font-weight: 700; flex-shrink: 0; }
+.spc-cta { display: block; text-align: center; }
+.spc-sub { text-align: center; font-size: .75rem; color: var(--text-soft); margin-top: .65rem; }
+
+/* ── PROCESS ── */
+.sol-process-sub { color: var(--text-mid); font-size: .95rem; margin-bottom: 2rem; }
+.sol-steps {
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: .8rem;
+  position: relative;
+}
+.sol-steps::before {
+  content: ''; position: absolute;
+  top: 27px; left: 5%; right: 5%; height: 1px;
+  background: var(--border); z-index: 0;
+}
+.sol-step { text-align: center; padding: 0 .5rem; position: relative; z-index: 1; }
+.sol-step-num {
+  width: 54px; height: 54px; border-radius: 50%;
+  background: var(--white); border: 2px solid var(--blue); color: var(--blue);
+  font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.1rem; font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 1rem; box-shadow: 0 2px 8px rgba(0,82,204,.12);
+}
+.sol-step h3 { font-family: 'Plus Jakarta Sans', sans-serif; font-size: .88rem; font-weight: 700; margin-bottom: .38rem; }
+.sol-step p { color: var(--text-soft); font-size: .78rem; line-height: 1.6; }
+
+/* ── RELATED ── */
+.sol-related-section { background: var(--bg); }
+.sol-related-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.2rem; }
+.sol-related-card {
+  display: flex; flex-direction: column; gap: .35rem;
+  background: var(--white); border: 1.5px solid var(--border);
+  border-radius: 12px; padding: 1.3rem;
+  text-decoration: none; transition: transform .2s, box-shadow .2s, border-color .2s;
+}
+.sol-related-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-m); border-color: var(--blue); }
+.src-icon { font-size: 1.6rem; }
+.src-title { font-family: 'Plus Jakarta Sans', sans-serif; font-size: .95rem; font-weight: 700; color: var(--text); }
+.src-price { font-size: .82rem; color: var(--blue); font-weight: 600; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 900px) {
+  .sol-price-card { grid-template-columns: 1fr; }
+  .sol-steps { grid-template-columns: 1fr 1fr; gap: 1.2rem; }
+  .sol-steps::before { display: none; }
+  .sol-related-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 600px) {
+  .sol-hero { padding: 2.5rem 6% 2rem; }
+  .sol-section { padding: 2.5rem 6%; }
+  .sol-steps { grid-template-columns: 1fr; }
+  .sol-related-grid { grid-template-columns: 1fr; }
+  .sol-for-grid { grid-template-columns: 1fr; }
+  .sol-features-grid { grid-template-columns: 1fr; }
+}

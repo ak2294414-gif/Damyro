@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://northweb.co/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://northweb.co/pages/booking.html</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://northweb.co/pages/solutions/showcase.html</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://northweb.co/pages/solutions/ecommerce.html</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://northweb.co/pages/solutions/restaurant.html</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://northweb.co/pages/solutions/business.html</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://northweb.co/pages/solutions/portfolio.html</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://northweb.co/pages/solutions/realestate.html</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://northweb.co/pages/solutions/education.html</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://northweb.co/pages/solutions/gym.html</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://northweb.co/pages/solutions/salon.html</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://northweb.co/pages/solutions/medical.html</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://northweb.co/pages/solutions/event.html</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://northweb.co/pages/solutions/hotel.html</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://northweb.co/pages/solutions/seo.html</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://northweb.co/pages/policies.html</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
+</urlset>

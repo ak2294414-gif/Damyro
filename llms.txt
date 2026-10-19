@@ -1,0 +1,45 @@
+# NorthWeb Co.
+> Professional website design for local businesses across Northeast India.
+
+NorthWeb Co. is a freelance web design service operated by Ankur, based in Northeast India.
+We build fast, mobile-first websites using custom HTML, CSS and JavaScript.
+
+## Pages
+- /index.html — Home: hero, 12 website solutions, live demos, process steps
+- /pages/booking.html — Book a free consultation
+- /pages/policies.html — Privacy policy, terms, refund policy, cookie policy
+- /pages/solutions/showcase.html — Collection Showcase website solution
+- /pages/solutions/ecommerce.html — D2C E-commerce website solution
+- /pages/solutions/restaurant.html — Restaurant / Cafe website solution
+- /pages/solutions/business.html — Business / Corporate website solution
+- /pages/solutions/portfolio.html — Portfolio website solution
+- /pages/solutions/realestate.html — Real Estate / Property website solution
+- /pages/solutions/education.html — Educational / Coaching website solution
+- /pages/solutions/gym.html — Gym / Fitness Studio website solution
+- /pages/solutions/salon.html — Salon / Beauty Parlor website solution
+- /pages/solutions/medical.html — Clinic / Medical website solution
+- /pages/solutions/event.html — Event / Wedding website solution
+- /pages/solutions/hotel.html — Hotel / Homestay / PG website solution
+- /pages/solutions/seo.html — Local SEO Add-On
+
+## Website Solutions & Pricing
+- Collection Showcase: ₹8,000–15,000
+- D2C E-commerce Store: ₹30,000–55,000
+- Restaurant / Cafe Website: ₹10,000–20,000
+- Business / Corporate Website: ₹12,000–22,000
+- Portfolio Website: ₹6,000–12,000
+- Real Estate / Property Website: ₹18,000–35,000
+- Educational / Coaching Website: ₹15,000–28,000
+- Gym / Fitness Studio Website: ₹10,000–18,000
+- Salon / Beauty Parlor Website: ₹8,000–16,000
+- Clinic / Medical Website: ₹12,000–22,000
+- Event / Wedding Website: ₹10,000–18,000
+- Hotel / Homestay / PG Website: ₹18,000–32,000
+- Local SEO Add-On: ₹4,000–8,000/month
+
+## Contact
+- WhatsApp: +91 7637 913 832
+- Email: ak2294414x@gmail.com
+
+## Demo
+- https://domeweb.shop/ — Live Collection Showcase demo
