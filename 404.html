@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Page Not Found — NorthWeb Co.</title>
+<meta name="robots" content="noindex"/>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%230052CC'/><text y='.9em' font-size='70' x='12' fill='white'>N</text></svg>"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&family=Inter:wght@400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="css/style.css"/>
+<style>
+  .notfound-page {
+    min-height: 70vh; display: flex; align-items: center;
+    justify-content: center; text-align: center; padding: 4rem 6%;
+  }
+  .notfound-inner { max-width: 480px; }
+  .notfound-code {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 7rem; font-weight: 800;
+    color: var(--blue-l); line-height: 1;
+    margin-bottom: 0;
+  }
+  .notfound-inner h1 {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 1.6rem; font-weight: 800;
+    margin-bottom: .8rem; color: var(--text);
+  }
+  .notfound-inner p { color: var(--text-mid); font-size: .95rem; line-height: 1.75; margin-bottom: 2rem; }
+  .notfound-actions { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+<div id="cookie-root"></div>
+<div id="nav-root"></div>
+
+<main id="main-content">
+  <div class="notfound-page">
+    <div class="notfound-inner">
+      <div class="notfound-code" aria-hidden="true">404</div>
+      <h1>Page Not Found</h1>
+      <p>The page you're looking for doesn't exist or has been moved. Let's get you back on track.</p>
+      <div class="notfound-actions">
+        <a href="index.html" class="btn-primary">Go to Home</a>
+        <a href="pages/booking.html" class="btn-secondary">Book a Consultation</a>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div id="footer-root"></div>
+<script src="js/components.js"></script>
+</body>
+</html>
